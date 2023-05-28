@@ -1,12 +1,16 @@
+import {prng_alea} from 'esm-seedrandom';
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
 import { words } from '../assets/words.js'
 
 export const useGameStore = defineStore('game', () => {
+
+  let rnd = prng_alea('hello')
+
   // FIXME! can generate duplicates!
   const randomWord = () => {
-    const randomIndex = Math.floor(Math.random() * words.length);
+    const randomIndex = Math.floor(rnd() * words.length);
     return words[randomIndex];
   }
 
@@ -25,7 +29,9 @@ export const useGameStore = defineStore('game', () => {
     return board.value[idx]
   }
 
-  const newGame = (total) => {
+  const newGame = (total, keyword = 'keyword') => {
+    rnd = prng_alea(keyword)
+
     let red = Math.round((total - 1) / 3)
     let blue = red - 1
     let white = total - red - blue - 1
@@ -36,7 +42,7 @@ export const useGameStore = defineStore('game', () => {
 
     // Fisher-Yates shuffle
     for (let i = cards.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(rnd() * (i + 1));
         [cards[i], cards[j]] = [cards[j], cards[i]];
     }
 
