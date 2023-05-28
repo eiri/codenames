@@ -15,6 +15,8 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const board = ref([])
+  const boardSize = ref(25)
+  const gameKey = ref(randomWord())
 
   const open = (idx) => {
     if (board.value[idx]) {
@@ -22,19 +24,12 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  const card = (idx) => {
-    if (!board.value[idx]) {
-      return {word: '?', kind: 'white', opened: false}
-    }
-    return board.value[idx]
-  }
-
-  const newGame = (total, keyword = 'keyword') => {
-    rnd = prng_alea(keyword)
-
-    let red = Math.round((total - 1) / 3)
+  const newGame = () => {
+    console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
+    rnd = prng_alea(gameKey.value)
+    let red = Math.round((boardSize.value - 1) / 3)
     let blue = red - 1
-    let white = total - red - blue - 1
+    let white = boardSize.value - red - blue - 1
     let cards = ['black']
       .concat(Array(red).fill('red'))
       .concat(Array(blue).fill('blue'))
@@ -46,6 +41,7 @@ export const useGameStore = defineStore('game', () => {
         [cards[i], cards[j]] = [cards[j], cards[i]];
     }
 
+    board.value = []
     for (let i in cards) {
       board.value.push({
         idx: i,
@@ -56,5 +52,5 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  return { board, card, open, newGame }
+  return { gameKey, boardSize, board, open, newGame, randomWord }
 })

@@ -11,37 +11,28 @@ const store = useGameStore()
 
 const cols = ref(5)
 const rows = ref(6)
-const { board } = storeToRefs(store)
-const { card, newGame } = store
+const { board, boardSize } = storeToRefs(store)
+const { newGame } = store
 
 const idx = (col, row) => row * cols.value + col
 
 onMounted(() => {
-  newGame(cols.value * rows.value)
+  boardSize.value = cols.value * rows.value
+  newGame()
 })
 </script>
 
 <template>
-  <div v-for="(n, row) in rows" :key="row">
-    <Card
-      class="card"
-      v-for="(n, col) in cols"
-      :key="col"
-      :card="card(idx(col, row))"
-    />
+  <div>
+    <Card class="card" v-for="(card, i) in board" :key="i" :card="card" />
   </div>
 </template>
 
 <style scoped>
-h1 {
-  font-weight: 600;
-  font-size: 36px;
-}
-
 div {
   display: grid;
+  grid-template-columns: repeat(v-bind('cols'), minmax(200px, 1fr));
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .card {
