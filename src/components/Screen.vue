@@ -1,52 +1,22 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useWordsStore } from '../stores/words'
+import { storeToRefs } from 'pinia'
+import { useGameStore } from '../stores/game'
 
 import Card from './Card.vue'
 
 
-const { randomWords } = useWordsStore()
+const store = useGameStore()
 
-const board = ref([])
 const cols = ref(5)
 const rows = ref(6)
+const { board } = storeToRefs(store)
+const { card, newGame } = store
 
-const makeBoard = (words) => {
-  const total = words.length
-  let red = Math.round((total - 1) / 3)
-  let blue = red - 1
-  let white = total - red - blue - 1
-  let cards = ['black']
-    .concat(Array(red).fill('red'))
-    .concat(Array(blue).fill('blue'))
-    .concat(Array(white).fill('white'))
-
-  // Fisher-Yates shuffle
-  for (let i = cards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [cards[i], cards[j]] = [cards[j], cards[i]];
-  }
-
-  for (let i in cards) {
-    board.value.push({
-      kind: cards[i],
-      word: words[i],
-      opened: false
-    })
-  }
-}
-
-const card = (col, row) => {
-  if (board.value.length == 0) {
-    return {}
-  }
-  const idx = row * cols.value + col
-  return board.value[idx]
-}
+const idx = (col, row) => row * cols.value + col
 
 onMounted(() => {
-  const words = randomWords(cols.value * rows.value)
-  makeBoard(words)
+  newGame(cols.value * rows.value)
 })
 </script>
 
@@ -56,7 +26,7 @@ onMounted(() => {
       class="card"
       v-for="(n, col) in cols"
       :key="col"
-      :card="card(col, row)"
+      :card="card(idx(col, row))"
     />
   </div>
 </template>

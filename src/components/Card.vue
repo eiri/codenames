@@ -1,6 +1,9 @@
 <script setup>
 import { computed, toRefs  } from 'vue'
 
+import { useGameStore } from '../stores/game'
+
+
 const props = defineProps({
   card: {
     type: Object,
@@ -10,17 +13,19 @@ const props = defineProps({
 
 const { card } = toRefs(props);
 
+const { open } = useGameStore()
+
 const cardClass = computed(() => {
     return `${card.value.kind}-${card.value.opened ? 'open' : 'closed'}`
 })
-
-const flip = () => {
-  card.value.opened = !card.value.opened
-}
 </script>
 
 <template>
-  <article class="animate__animated" :class="[cardClass, {animate__flipInY: card.opened}]" @click="flip">
+  <article
+    class="animate__animated"
+    :class="[cardClass, {animate__flipInY: card.opened}]"
+    @click="open(card.idx)"
+  >
     <span>{{ card.word }}</span>
   </article>
 </template>
