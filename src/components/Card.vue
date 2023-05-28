@@ -20,7 +20,7 @@ const flip = () => {
 </script>
 
 <template>
-  <article :class="cardClass" @click="flip">
+  <article class="animate__animated" :class="[cardClass, {animate__flipInY: card.opened}]" @click="flip">
     <span>{{ card.word }}</span>
   </article>
 </template>
