@@ -1,9 +1,17 @@
 <script setup>
-import MainScreen from './components/MainScreen.vue'
+import Screen from './components/Screen.vue'
 </script>
 
 <template>
   <main>
-    <MainScreen msg="Ohai!" />
+    <Screen />
   </main>
 </template>
+
+<style scoped>
+header, main, footer {
+  padding: 0.5rem;
+}
+
+
+</style>
