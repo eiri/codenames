@@ -2,7 +2,7 @@
   "name": "codenames",
   "version": "0.1.0",
   "private": true,
-  "license" : "MIT",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
