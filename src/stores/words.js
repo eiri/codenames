@@ -10,11 +10,7 @@ export const useWordsStore = defineStore('words', () => {
     return words[randomIndex];
   }
 
-  const randomWords = (cols, rows) => {
-    return Array(rows).fill().map(() =>
-      Array(cols).fill().map(randomWord)
-    )
-  }
+  const randomWords = (total) => Array(total).fill().map(randomWord)
 
   return { randomWords }
 })
