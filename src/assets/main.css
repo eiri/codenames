@@ -14,9 +14,9 @@ body {
   line-height: 1;
   color: var(--color-text);
   background: var(--color-background);
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: 'Playfair', serif;
 }
 
 h1, h2, h3 {
-  font-family: 'Playfair', serif;
+  font-family: 'Source Sans Pro', sans-serif;
 }

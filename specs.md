@@ -27,8 +27,8 @@ Source: https://inkbotdesign.com/font-combinations/
 
 - Baby Blue: #cee6f2
 - Beryl Blue: #6fa1bb
-- Salmon Orange: #e9b796
+- Lilac: #f6ede3
 - Peach: #e3867d
-- Ruby Red: #962e2a
+- Strawberry: #d2385a;
 
 Source: https://looka.com/blog/color-combinations/
