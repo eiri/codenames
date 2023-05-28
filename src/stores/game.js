@@ -1,4 +1,4 @@
-import {prng_alea} from 'esm-seedrandom';
+import { prng_alea } from 'esm-seedrandom';
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
@@ -17,19 +17,30 @@ export const useGameStore = defineStore('game', () => {
   const board = ref([])
   const boardSize = ref(25)
   const gameKey = ref(randomWord())
+  const score = ref({red: 0, blue: 0})
+  const gameOver = ref(false)
 
   const open = (idx) => {
-    if (board.value[idx]) {
+    if (board.value[idx] && !board.value[idx].opened) {
       board.value[idx].opened = true
+      if (board.value[idx].kind == 'red') {
+        score.value.red -= 1
+      }
+      if (board.value[idx].kind == 'blue') {
+        score.value.blue -= 1
+      }
+      if (board.value[idx].kind == 'black' || score.value.red == 0 || score.value.blue == 0) {
+        gameOver.value = true
+      }
     }
   }
 
   const newGame = () => {
     console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
     rnd = prng_alea(gameKey.value)
-    let red = Math.round((boardSize.value - 1) / 3)
-    let blue = red - 1
-    let white = boardSize.value - red - blue - 1
+    const red = Math.round((boardSize.value - 1) / 3)
+    const blue = red - 1
+    const white = boardSize.value - red - blue - 1
     let cards = ['black']
       .concat(Array(red).fill('red'))
       .concat(Array(blue).fill('blue'))
@@ -50,7 +61,10 @@ export const useGameStore = defineStore('game', () => {
         opened: false
       })
     }
+
+    score.value = {red, blue}
+    gameOver.value = false
   }
 
-  return { gameKey, boardSize, board, open, newGame, randomWord }
+  return { gameKey, boardSize, score, gameOver, board, open, newGame, randomWord }
 })

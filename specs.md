@@ -30,5 +30,6 @@ Source: https://inkbotdesign.com/font-combinations/
 - Lilac: #f6ede3
 - Peach: #e3867d
 - Strawberry: #d2385a;
+- Dark Sage: #507b6a;
 
 Source: https://looka.com/blog/color-combinations/

@@ -50,6 +50,7 @@ article:hover {
 .red-open {
   color: var(--vt-c-white);
   background-color: var(--vt-c-strawberry);
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
 }
 
 .red-closed {
@@ -60,6 +61,7 @@ article:hover {
 .blue-open {
   color: var(--vt-c-white);
   background-color: var(--vt-c-beril-blue);
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
 }
 
 .blue-closed {
