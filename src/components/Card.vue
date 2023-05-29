@@ -1,5 +1,6 @@
 <script setup>
 import { computed, toRefs  } from 'vue'
+import { storeToRefs  } from 'pinia'
 
 import { useGameStore } from '../stores/game'
 
@@ -13,10 +14,14 @@ const props = defineProps({
 
 const { card } = toRefs(props);
 
-const { open } = useGameStore()
+const store = useGameStore()
+const { captainView } = storeToRefs(store)
+const { open } = store
 
 const cardClass = computed(() => {
-    return `${card.value.kind}-${card.value.opened ? 'open' : 'closed'}`
+  let kind = (captainView.value || card.value.opened) ?  card.value.kind : 'white'
+  let mod = card.value.opened ? 'open' : 'closed'
+  return `${kind}-${mod}`
 })
 </script>
 
@@ -32,6 +37,7 @@ const cardClass = computed(() => {
 
 <style scoped>
 article {
+  cursor: pointer;
   height: 5rem;
   border: 1px solid var(--color-border);
   border-radius: 4px;

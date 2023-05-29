@@ -1,6 +1,6 @@
 @import './base.css';
 
-html, body, h1, h2, h3 {
+html, body {
   margin: 0;
   padding: 0;
   border: 0;
@@ -14,9 +14,5 @@ body {
   line-height: 1;
   color: var(--color-text);
   background: var(--color-background);
-  font-family: 'Playfair', serif;
-}
-
-h1, h2, h3, button {
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: var(--font-serif);
 }

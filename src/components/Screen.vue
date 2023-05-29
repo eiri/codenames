@@ -10,7 +10,7 @@ import Card from './Card.vue'
 const store = useGameStore()
 
 const cols = ref(5)
-const rows = ref(6)
+const rows = ref(5)
 const { board, boardSize } = storeToRefs(store)
 const { newGame } = store
 

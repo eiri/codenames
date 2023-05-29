@@ -19,6 +19,7 @@ export const useGameStore = defineStore('game', () => {
   const gameKey = ref(randomWord())
   const score = ref({red: 0, blue: 0})
   const gameOver = ref(false)
+  const captainView = ref(false)
 
   const open = (idx) => {
     if (board.value[idx] && !board.value[idx].opened) {
@@ -66,5 +67,5 @@ export const useGameStore = defineStore('game', () => {
     gameOver.value = false
   }
 
-  return { gameKey, boardSize, score, gameOver, board, open, newGame, randomWord }
+  return { gameKey, boardSize, score, gameOver, captainView, board, open, newGame, randomWord }
 })
