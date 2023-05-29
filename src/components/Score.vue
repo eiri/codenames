@@ -6,11 +6,13 @@ import { useGameStore } from '../stores/game'
 
 const store = useGameStore()
 
-const { gameKey, score, captainView } = storeToRefs(store)
+const { gameKey, score } = storeToRefs(store)
 const { randomWord, newGame } = store
 
 const nextGame = () => {
-  gameKey.value = randomWord()
+  let word = gameKey.value
+  do { word = randomWord() } while (word == gameKey.value)
+  gameKey.value = word
   newGame()
 }
 </script>

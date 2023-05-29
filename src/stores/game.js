@@ -39,6 +39,7 @@ export const useGameStore = defineStore('game', () => {
   const newGame = () => {
     console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
     rnd = prng_alea(gameKey.value)
+    const words = Array(boardSize.value).fill().map(randomWord)
     const red = Math.round((boardSize.value - 1) / 3)
     const blue = red - 1
     const white = boardSize.value - red - blue - 1
@@ -58,7 +59,7 @@ export const useGameStore = defineStore('game', () => {
       board.value.push({
         idx: i,
         kind: cards[i],
-        word: randomWord(),
+        word: words[i],
         opened: false
       })
     }
