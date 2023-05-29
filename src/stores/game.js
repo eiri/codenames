@@ -8,7 +8,6 @@ export const useGameStore = defineStore('game', () => {
 
   let rnd = prng_alea('hello')
 
-  // FIXME! can generate duplicates!
   const randomWord = () => {
     const randomIndex = Math.floor(rnd() * words.length);
     return words[randomIndex];
@@ -39,6 +38,7 @@ export const useGameStore = defineStore('game', () => {
   const newGame = () => {
     console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
     rnd = prng_alea(gameKey.value)
+    // FIXME: refactor to uniqueRandomWords(size) as this can have duplicates
     const words = Array(boardSize.value).fill().map(randomWord)
     const red = Math.round((boardSize.value - 1) / 3)
     const blue = red - 1
