@@ -3,18 +3,19 @@ import { storeToRefs } from 'pinia'
 
 import { useGameStore } from '../stores/game'
 
+import WinMessage from './WinMessage.vue'
 
 const store = useGameStore()
-const { gameKey, captainView } = storeToRefs(store)
+const { gameOver, captainView } = storeToRefs(store)
 </script>
 
 <template>
   <div class="wrapper">
-    <div>{{ gameKey }}</div>
+    <div><WinMessage :gameOver="gameOver" /></div>
     <div>
       <input type="checkbox" id="captain" v-model="captainView" />
       <label for="captain">
-        <img src="../assets/crown.svg" />
+        <img src="../assets/pirate-hat.svg" />
       </label>
     </div>
   </div>
@@ -28,7 +29,6 @@ div.wrapper {
 }
 
 .wrapper div {
-  font-family: var(--font-sans);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,7 +43,7 @@ input[type=checkbox]{
 label {
   cursor: pointer;
   font-family: var(--font-sans);
-  text-indent: -2rem;
+  text-indent: -2.4rem;
   /*text-indent: -9999px;*/
   width: 4rem;
   height: 2rem;

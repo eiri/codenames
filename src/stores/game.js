@@ -17,7 +17,7 @@ export const useGameStore = defineStore('game', () => {
   const boardSize = ref(25)
   const gameKey = ref(randomWord())
   const score = ref({red: 0, blue: 0})
-  const gameOver = ref(false)
+  const gameOver = ref('none')
   const captainView = ref(false)
 
   const open = (idx) => {
@@ -25,12 +25,22 @@ export const useGameStore = defineStore('game', () => {
       board.value[idx].opened = true
       if (board.value[idx].kind == 'red') {
         score.value.red -= 1
+        if (score.value.red == 0) {
+          gameOver.value = 'red'
+        }
       }
       if (board.value[idx].kind == 'blue') {
         score.value.blue -= 1
+        if (score.value.blue == 0) {
+          gameOver.value = 'blue'
+        }
       }
-      if (board.value[idx].kind == 'black' || score.value.red == 0 || score.value.blue == 0) {
-        gameOver.value = true
+      if (board.value[idx].kind == 'black') {
+        gameOver.value = 'black'
+      }
+      if (gameOver.value != 'none') {
+        board.value.forEach((c) => c.opened = true)
+        // flip board
       }
     }
   }
@@ -65,7 +75,7 @@ export const useGameStore = defineStore('game', () => {
     }
 
     score.value = {red, blue}
-    gameOver.value = false
+    gameOver.value = 'none'
   }
 
   return { gameKey, boardSize, score, gameOver, captainView, board, open, newGame, randomWord }
