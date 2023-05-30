@@ -1,10 +1,29 @@
 import { prng_alea } from 'esm-seedrandom';
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { defineStore } from 'pinia'
 
 import { words } from '../assets/words.js'
 
 export const useGameStore = defineStore('game', () => {
+
+
+  const supabase = inject('supabase')
+  const channel = supabase.channel('game') // FIXME game-${room number}
+  channel.on('broadcast', {event: '*'}, (msg) => {
+    switch (msg.event) {
+      case 'open':
+        open(msg.payload.idx)
+        break;
+      case 'newGame':
+        gameKey.value = msg.payload.gameKey
+        newGame()
+    }
+  }).subscribe((status) => {
+    if (status == 'SUBSCRIBED') {
+      console.log('subscribed to broadcast')
+      subscribed.value = true
+    }
+  })
 
   let rnd = prng_alea('hello')
 
@@ -17,30 +36,38 @@ export const useGameStore = defineStore('game', () => {
   const boardSize = ref(25)
   const gameKey = ref(randomWord())
   const score = ref({red: 0, blue: 0})
+  const subscribed = ref(false)
   const gameOver = ref('none')
   const captainView = ref(false)
 
   const open = (idx) => {
     if (board.value[idx] && !board.value[idx].opened) {
       board.value[idx].opened = true
-      if (board.value[idx].kind == 'red') {
-        score.value.red -= 1
-        if (score.value.red == 0) {
-          gameOver.value = 'red'
-        }
-      }
-      if (board.value[idx].kind == 'blue') {
-        score.value.blue -= 1
-        if (score.value.blue == 0) {
-          gameOver.value = 'blue'
-        }
-      }
-      if (board.value[idx].kind == 'black') {
-        gameOver.value = 'black'
+      switch (board.value[idx].kind) {
+        case 'red':
+          score.value.red -= 1
+          if (score.value.red == 0) {
+            gameOver.value = 'red'
+          }
+          break;
+        case 'blue':
+          score.value.blue -= 1
+          if (score.value.blue == 0) {
+            gameOver.value = 'blue'
+          }
+          break;
+        case 'black':
+          gameOver.value = 'black'
       }
       if (gameOver.value != 'none') {
         board.value.forEach((c) => c.opened = true)
-        // flip board
+      }
+      if (subscribed.value) {
+        channel.send({
+          type: 'broadcast',
+          event: 'open',
+          payload: {idx}
+        })
       }
     }
   }
@@ -75,8 +102,17 @@ export const useGameStore = defineStore('game', () => {
     }
 
     score.value = {red, blue}
+    captainView.value = false
     gameOver.value = 'none'
+    if (subscribed.value) {
+      channel.send({
+        type: 'broadcast',
+        event: 'newGame',
+        payload: {gameKey: gameKey.value}
+      })
+    }
   }
 
-  return { gameKey, boardSize, score, gameOver, captainView, board, open, newGame, randomWord }
+  return { gameKey, boardSize, score, gameOver, captainView, subscribed,
+    board, open, newGame, randomWord }
 })

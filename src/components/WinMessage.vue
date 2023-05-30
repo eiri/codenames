@@ -19,7 +19,6 @@ const props = defineProps({
   <div v-show="gameOver == 'blue'">
     <span class="blue">Blue</span> team won
   </div>
-
 </template>
 
 <style scoped>
