@@ -2,6 +2,7 @@
 import { computed, toRefs  } from 'vue'
 import { storeToRefs  } from 'pinia'
 
+import { CardState } from '../assets/states.js'
 import { useGameStore } from '../stores/game'
 
 
@@ -19,16 +20,17 @@ const { captainView } = storeToRefs(store)
 const { open } = store
 
 const cardClass = computed(() => {
-  let kind = (captainView.value || card.value.opened) ?  card.value.kind : 'white'
-  let mod = card.value.opened ? 'open' : 'closed'
-  return `${kind}-${mod}`
+  if (!captainView.value && card.value.closed()) {
+    return 'card-3'
+  }
+  return `card-${card.value.state} ${card.value.closed() ? '' : 'open'}`
 })
 </script>
 
 <template>
   <article
     class="animate__animated"
-    :class="[cardClass, {animate__flipInY: card.opened}]"
+    :class="[cardClass, {animate__flipInY: !card.closed()}]"
     @click="open(card.idx)"
   >
     <span>{{ card.word }}</span>
@@ -49,49 +51,55 @@ article {
   font-size: 2vw;
 }
 
-article:hover {
+article:hover, .open {
   box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
 }
 
-.red-open {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-strawberry);
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
-}
-
-.red-closed {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-peach);
-}
-
-.blue-open {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-beril-blue);
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
-}
-
-.blue-closed {
-  color: var(--vt-c-black);
-  background-color: var(--vt-c-baby-blue);
-}
-
-.black-open {
+/* black-open */
+.card-0 {
   color: var(--vt-c-white);
   background-color: var(--vt-c-black);
 }
 
-.black-closed {
+/* black-open */
+.card-1 {
   color: var(--vt-c-white);
   background-color: var(--vt-c-text-light-2);
 }
 
-.white-open {
+/* white-open */
+.card-2 {
   color: var(--vt-c-black);
   background-color: var(--vt-c-white);
 }
 
-.white-closed {
+/* white-closed */
+.card-3 {
   color: var(--vt-c-black);
   background-color: var(--vt-c-lilac);
+}
+
+/* white-open */
+.card-4 {
+  color: var(--vt-c-white);
+  background-color: var(--vt-c-strawberry);
+}
+
+/* red-closed */
+.card-5 {
+  color: var(--vt-c-white);
+  background-color: var(--vt-c-peach);
+}
+
+/* blue-open */
+.card-6 {
+  color: var(--vt-c-white);
+  background-color: var(--vt-c-beril-blue);
+}
+
+/* blue-closed */
+.card-7 {
+  color: var(--vt-c-black);
+  background-color: var(--vt-c-baby-blue);
 }
 </style>

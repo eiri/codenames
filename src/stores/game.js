@@ -3,10 +3,9 @@ import { ref, computed, inject } from 'vue'
 import { defineStore } from 'pinia'
 
 import { words } from '../assets/words.js'
+import { CardState } from '../assets/states.js'
 
 export const useGameStore = defineStore('game', () => {
-
-
   const supabase = inject('supabase')
   const channel = supabase.channel('game') // FIXME game-${room number}
   channel.on('broadcast', {event: '*'}, (msg) => {
@@ -15,8 +14,10 @@ export const useGameStore = defineStore('game', () => {
         open(msg.payload.idx)
         break;
       case 'newGame':
-        gameKey.value = msg.payload.gameKey
-        newGame()
+        if (msg.payload.gameKey != gameKey.value) {
+          gameKey.value = msg.payload.gameKey
+          newGame()
+        }
     }
   }).subscribe((status) => {
     if (status == 'SUBSCRIBED') {
@@ -25,42 +26,52 @@ export const useGameStore = defineStore('game', () => {
     }
   })
 
-  let rnd = prng_alea('hello')
+  const board = ref([])
+  const boardSize = ref(25)
+  const gameKey = ref('room+date')
+  const score = ref({red: 0, blue: 0})
+  const subscribed = ref(false)
+  const gameOver = ref('none')
+  const captainView = ref(false)
+
+  let rnd = prng_alea(gameKey.value)
 
   const randomWord = () => {
     const randomIndex = Math.floor(rnd() * words.length);
     return words[randomIndex];
   }
 
-  const board = ref([])
-  const boardSize = ref(25)
-  const gameKey = ref(randomWord())
-  const score = ref({red: 0, blue: 0})
-  const subscribed = ref(false)
-  const gameOver = ref('none')
-  const captainView = ref(false)
-
   const open = (idx) => {
-    if (board.value[idx] && !board.value[idx].opened) {
-      board.value[idx].opened = true
-      switch (board.value[idx].kind) {
-        case 'red':
+    if (board.value[idx] && board.value[idx].closed()) {
+      switch (board.value[idx].state) {
+        case CardState.RedClosed:
+          board.value[idx].state = CardState.RedOpened
           score.value.red -= 1
           if (score.value.red == 0) {
             gameOver.value = 'red'
           }
           break;
-        case 'blue':
+        case CardState.BlueClosed:
+          board.value[idx].state = CardState.BlueOpened
           score.value.blue -= 1
           if (score.value.blue == 0) {
             gameOver.value = 'blue'
           }
           break;
-        case 'black':
+        case CardState.BlackClosed:
+          board.value[idx].state = CardState.BlackOpened
           gameOver.value = 'black'
+          break;
+        case CardState.WhiteClosed:
+          board.value[idx].state = CardState.WhiteOpened
       }
       if (gameOver.value != 'none') {
-        board.value.forEach((c) => c.opened = true)
+        // all even are open, odds are closed, so just shift down
+        board.value.forEach((c) => {
+          if (c.closed()) {
+            c.state -= 1
+          }
+        })
       }
       if (subscribed.value) {
         channel.send({
@@ -75,15 +86,15 @@ export const useGameStore = defineStore('game', () => {
   const newGame = () => {
     console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
     rnd = prng_alea(gameKey.value)
-    // FIXME: refactor to uniqueRandomWords(size) as this can have duplicates
-    const words = Array(boardSize.value).fill().map(randomWord)
     const red = Math.round((boardSize.value - 1) / 3)
     const blue = red - 1
     const white = boardSize.value - red - blue - 1
-    let cards = ['black']
-      .concat(Array(red).fill('red'))
-      .concat(Array(blue).fill('blue'))
-      .concat(Array(white).fill('white'))
+    let cards = [CardState.BlackClosed]
+      .concat(Array(red).fill(CardState.RedClosed))
+      .concat(Array(blue).fill(CardState.BlueClosed))
+      .concat(Array(white).fill(CardState.WhiteClosed))
+    // FIXME: refactor to uniqueRandomWords(size) as this can have duplicates
+    const words = Array(boardSize.value).fill().map(randomWord)
 
     // Fisher-Yates shuffle
     for (let i = cards.length - 1; i > 0; i--) {
@@ -95,9 +106,9 @@ export const useGameStore = defineStore('game', () => {
     for (let i in cards) {
       board.value.push({
         idx: i,
-        kind: cards[i],
+        state: cards[i],
         word: words[i],
-        opened: false
+        closed() { return this.state % 2 == 1 }
       })
     }
 
