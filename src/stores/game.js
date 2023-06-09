@@ -12,9 +12,8 @@ export const useGameStore = defineStore('game', () => {
 
   const broker = inject('broker')
   const channel = broker.channels.get('game') // FIXME game-${room number}
-  channel.on('attached', (stateChange) => {
-    console.log(stateChange)
 
+  channel.on('attached', (stateChange) => {
     channel.publish('reqOnline', {})
     const wait = 600 // ms
     setTimeout(() => {
@@ -29,6 +28,7 @@ export const useGameStore = defineStore('game', () => {
       }
     }, wait)
   })
+
   channel.subscribe(({name, data}) => {
     switch (name) {
       case 'open':
@@ -66,9 +66,7 @@ export const useGameStore = defineStore('game', () => {
   const board = ref([])
   const boardSize = ref(25)
   const gameKey = ref('room+date')
-  const score = ref({red: 0, blue: 0})
   const subscribed = ref(false)
-  const gameOver = ref('none')
   const captainView = ref(false)
 
   let rnd = prng_alea(gameKey.value)
@@ -78,38 +76,47 @@ export const useGameStore = defineStore('game', () => {
     return words[randomIndex];
   }
 
-  const open = (idx) => {
-    if (board.value[idx] && board.value[idx].closed()) {
-      switch (board.value[idx].state) {
+  const score = computed(() => {
+    let score = {red: 0, blue: 0, gameOver: 'none'}
+    board.value.forEach((c) => {
+      switch (c.state) {
         case CardState.RedClosed:
-          board.value[idx].state = CardState.RedOpened
-          score.value.red -= 1
-          if (score.value.red == 0) {
-            gameOver.value = 'red'
-          }
+          score.red += 1
           break;
         case CardState.BlueClosed:
-          board.value[idx].state = CardState.BlueOpened
-          score.value.blue -= 1
-          if (score.value.blue == 0) {
-            gameOver.value = 'blue'
-          }
+          score.blue += 1
           break;
-        case CardState.BlackClosed:
-          board.value[idx].state = CardState.BlackOpened
-          gameOver.value = 'black'
-          break;
-        case CardState.WhiteClosed:
-          board.value[idx].state = CardState.WhiteOpened
-      }
-      if (gameOver.value != 'none') {
-        // all even are open, odds are closed, so just shift down
-        board.value.forEach((c) => {
-          if (c.closed()) {
-            c.state -= 1
-          }
-        })
-      }
+        case CardState.BlackOpened:
+          score.gameOver = 'black'
+       }
+    })
+
+    if (score.gameOver =='none' && score.red == 0) {
+      score.gameOver = 'red'
+    }
+
+    if (score.gameOver =='none' && score.blue == 0) {
+      score.gameOver = 'blue'
+    }
+
+    /*
+    FIXME: maybe add later if we want this behaviour
+    if (score.gameOver != 'none') {
+      // all even are open, odds are closed, so just shift down
+      board.value.forEach((c) => {
+        if (c.closed()) {
+          c.state -= 1
+        }
+      })
+    }
+    */
+
+    return score
+  })
+
+  const open = (idx) => {
+    if (board.value[idx] && board.value[idx].closed()) {
+      board.value[idx].state -= 1
       if (subscribed.value) {
         channel.publish('open', {idx})
       }
@@ -131,7 +138,7 @@ export const useGameStore = defineStore('game', () => {
         [cards[i], cards[j]] = [cards[j], cards[i]];
     }
 
-    return {cards, score: {red, blue}}
+    return cards
   }
 
   const newWords = (size) => {
@@ -143,7 +150,7 @@ export const useGameStore = defineStore('game', () => {
   const newGame = () => {
     console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
     rnd = prng_alea(gameKey.value)
-    const { cards, score } = newCards(boardSize.value)
+    const cards = newCards(boardSize.value)
     const words = newWords(boardSize.value)
 
     board.value = []
@@ -156,16 +163,12 @@ export const useGameStore = defineStore('game', () => {
       })
     }
 
-    score.value = score
     captainView.value = false
-    gameOver.value = 'none'
     if (subscribed.value) {
       channel.publish('newGame', {gameKey: gameKey.value})
     }
   }
 
-
-
-  return { gameKey, boardSize, score, gameOver, captainView, subscribed,
+  return { gameKey, boardSize, score, captainView, subscribed,
     board, open, newGame, randomWord }
 })
