@@ -16,7 +16,7 @@ const props = defineProps({
 const { card } = toRefs(props);
 
 const store = useGameStore()
-const { captainView } = storeToRefs(store)
+const { subscribed, captainView } = storeToRefs(store)
 const { open } = store
 
 const cardClass = computed(() => {
@@ -33,7 +33,7 @@ const cardClass = computed(() => {
     :class="[cardClass, {animate__flipInY: !card.closed()}]"
     @click="open(card.idx)"
   >
-    <span>{{ card.word }}</span>
+    <span :class="{blur: !subscribed}">{{ card.word }}</span>
   </article>
 </template>
 
@@ -53,6 +53,10 @@ article {
 
 article:hover, .open {
   box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
+}
+
+.blur {
+  filter: blur(8px);
 }
 
 /* black-open */
