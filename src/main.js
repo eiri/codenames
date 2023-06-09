@@ -2,12 +2,12 @@ import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import supabase from './plugin/supabase.js'
+import broker from './plugin/broker.js'
 import App from './App.vue'
 
 const app = createApp(App)
 
-app.use(supabase)
+app.use(broker)
 app.use(createPinia())
 
 app.mount('#app')

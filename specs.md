@@ -11,8 +11,7 @@ A multiplayer online board game.
 
 ### Backend
 
-- Supabase Database
-- Supabase Realtime
+- Ably broker
 
 ## Design
 
@@ -36,7 +35,7 @@ Source: https://looka.com/blog/color-combinations/
 
 ## Sync algo
 
-Use stable random with shared seed for board generation. Use supabase broadcast to sync seed and card open events.
+Use stable random with shared seed for board generation. Use Ably broadcast to sync seed and card open events.
 
 ### Initial sync:
 

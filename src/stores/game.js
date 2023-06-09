@@ -10,70 +10,56 @@ export const useGameStore = defineStore('game', () => {
   let online = []
   console.log(`session uid ${uid}`)
 
-  const supabase = inject('supabase')
-  const channel = supabase.channel('game') // FIXME game-${room number}
-  channel.on('broadcast', {event: '*'}, (msg) => {
-    switch (msg.event) {
+  const broker = inject('broker')
+  const channel = broker.channels.get('game') // FIXME game-${room number}
+  channel.on('attached', (stateChange) => {
+    console.log(stateChange)
+
+    channel.publish('reqOnline', {})
+    const wait = 600 // ms
+    setTimeout(() => {
+      if (online.length == 0) {
+        // assume this client is the first one
+        console.log('subscribed to broadcast')
+        subscribed.value = true
+      } else {
+        // FIXME: race here if top ack client quit after ansering,
+        // but that's ok for now
+        channel.publish('reqState', {uid: online[0]})
+      }
+    }, wait)
+  })
+  channel.subscribe(({name, data}) => {
+    switch (name) {
       case 'open':
-        open(msg.payload.idx)
+        open(data.idx)
         break;
       case 'newGame':
-        if (msg.payload.gameKey != gameKey.value) {
-          gameKey.value = msg.payload.gameKey
+        if (data.gameKey != gameKey.value) {
+          gameKey.value = data.gameKey
           newGame()
         }
         break;
       case 'reqOnline':
-        channel.send({
-            type: 'broadcast',
-            event: 'ackOnline',
-            payload: {uid}
-        })
+        channel.publish('ackOnline', {uid})
         break;
       case 'ackOnline':
-        online.push(msg.payload.uid)
+        online.push(data.uid)
         break;
       case 'reqState':
-        if (msg.payload.uid == uid) {
-          channel.send({
-              type: 'broadcast',
-              event: 'ackState',
-              payload: {
-                gameKey: gameKey.value,
-                state: board.value.map((c) => c.state)
-              }
+        if (data.uid == uid) {
+          channel.publish('ackState', {
+            gameKey: gameKey.value,
+            state: board.value.map((c) => c.state)
           })
         }
         break;
       case 'ackState':
         console.log('subscribed to broadcast')
-        console.log(msg.payload)
-        gameKey.value = msg.payload.gameKey
+        console.log(data)
+        gameKey.value = data.gameKey
         newGame()
         subscribed.value = true
-    }
-  }).subscribe((status) => {
-    if (status == 'SUBSCRIBED') {
-      channel.send({
-          type: 'broadcast',
-          event: 'reqOnline'
-      })
-      const wait = 600 // ms
-      setTimeout(() => {
-        if (online.length == 0) {
-          // assume this client is the first one
-          console.log('subscribed to broadcast')
-          subscribed.value = true
-        } else {
-          // FIXME: race here if top ack client quit after ansering,
-          // but that's ok for now
-          channel.send({
-              type: 'broadcast',
-              event: 'reqState',
-              payload: {uid: online[0]}
-          })
-        }
-      }, wait)
     }
   })
 
@@ -125,11 +111,7 @@ export const useGameStore = defineStore('game', () => {
         })
       }
       if (subscribed.value) {
-        channel.send({
-          type: 'broadcast',
-          event: 'open',
-          payload: {idx}
-        })
+        channel.publish('open', {idx})
       }
     }
   }
@@ -178,11 +160,7 @@ export const useGameStore = defineStore('game', () => {
     captainView.value = false
     gameOver.value = 'none'
     if (subscribed.value) {
-      channel.send({
-        type: 'broadcast',
-        event: 'newGame',
-        payload: {gameKey: gameKey.value}
-      })
+      channel.publish('newGame', {gameKey: gameKey.value})
     }
   }
 
