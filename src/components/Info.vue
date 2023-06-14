@@ -6,16 +6,13 @@ import { useGameStore } from '../stores/game'
 import WinMessage from './WinMessage.vue'
 
 const store = useGameStore()
-const { subscribed, score, captainView } = storeToRefs(store)
+const { gameKey, score, captainView } = storeToRefs(store)
 </script>
 
 <template>
   <div class="wrapper">
     <div>
-      <img :class="{down: !subscribed}" src="../assets/online.svg" />
-    </div>
-    <div>
-        <WinMessage :gameOver="score.gameOver" />
+      <WinMessage :gameKey="gameKey" :gameOver="score.gameOver" />
     </div>
     <div>
       <input type="checkbox" id="captain" v-model="captainView" />
@@ -29,7 +26,7 @@ const { subscribed, score, captainView } = storeToRefs(store)
 <style scoped>
 div.wrapper {
   display: grid;
-  grid-template-columns: 0.2fr 3.8fr 1fr;
+  grid-template-columns: 4fr 1fr;
   gap: 1rem;
 }
 

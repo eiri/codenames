@@ -5,11 +5,16 @@ const props = defineProps({
   gameOver: {
     type: String,
     required: true
-  }
+  },
+  gameKey: String
 })
 </script>
 
 <template>
+  <div v-show="gameOver == 'none'">
+    <img src="../assets/key.svg" />
+    {{gameKey}}
+  </div>
   <div v-show="gameOver == 'black'">
     Both teams lost
   </div>

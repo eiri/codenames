@@ -39,13 +39,25 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 ### Initial sync:
 
-- on subscribe broadcast "who's online"
-- wait for the answers for the timeout
+- on subscribe all members online with "presence" API
 - on empty list decide that you the first and enable 'subscribe' flag
-- otherwise ask top list for the state.
-- the state is current seed and a list of enums for {white black red blue}{opened closed} so far.
-- set seed to given value, call newGame and enable 'subscribed' flag.
+- otherwise ask top list memebr the state.
+- the state is current key (seed) and state/words
+- populate pinia board from state and enable 'subscribed' flag.
 
 ### ToDo
+
 - uniq userid
 - room for game with a route
+
+## Alternative message bus
+
+### Server
+
+- https://nchan.io/
+- https://github.com/slact/nchan
+
+### Hosting
+
+- https://www.hetzner.com/cloud
+- https://evoxt.com/pricing/

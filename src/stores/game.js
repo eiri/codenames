@@ -6,28 +6,32 @@ import { words } from '../assets/words.js'
 import { CardState } from '../assets/states.js'
 
 export const useGameStore = defineStore('game', () => {
-  const uid = Math.random().toString(16).slice(2)
-  let online = []
-  console.log(`session uid ${uid}`)
-
   const broker = inject('broker')
   const channel = broker.channels.get('game') // FIXME game-${room number}
 
-  channel.on('attached', (stateChange) => {
-    channel.publish('reqOnline', {})
-    const wait = 600 // ms
-    setTimeout(() => {
-      if (online.length == 0) {
-        // assume this client is the first one
-        console.log('subscribed to broadcast')
-        subscribed.value = true
-      } else {
-        // FIXME: race here if top ack client quit after ansering,
-        // but that's ok for now
-        channel.publish('reqState', {uid: online[0]})
-      }
-    }, wait)
-  })
+  channel.presence.enter()
+  /*
+  FIXME: this is for future members list
+  channel.presence.subscribe('enter', (member) => {
+    console.log(`${member.clientId} entered`)
+  });
+  */
+
+  channel.presence.get((err, members) => {
+    if (err != null || members.length == 0) {
+      // assume this client is the first one
+      console.log('subscribed: ok')
+      subscribed.value = true
+    } else {
+      // FIXME: race here if top ack client quit after ansering,
+      // but that's ok for now
+      channel.publish('reqState', {
+        from: broker.options.clientId,
+        to: members[0].clientId,
+      })
+    }
+  });
+
 
   channel.subscribe(({name, data}) => {
     switch (name) {
@@ -40,26 +44,33 @@ export const useGameStore = defineStore('game', () => {
           newGame()
         }
         break;
-      case 'reqOnline':
-        channel.publish('ackOnline', {uid})
-        break;
-      case 'ackOnline':
-        online.push(data.uid)
-        break;
       case 'reqState':
-        if (data.uid == uid) {
+        if (data.to == broker.options.clientId) {
           channel.publish('ackState', {
             gameKey: gameKey.value,
-            state: board.value.map((c) => c.state)
+            state: board.value.map(c => ({state: c.state, word: c.word})),
+            to: data.from,
           })
         }
         break;
       case 'ackState':
-        console.log('subscribed to broadcast')
-        console.log(data)
-        gameKey.value = data.gameKey
-        newGame()
-        subscribed.value = true
+        if (data.to == broker.options.clientId) {
+          console.log('subscribed: ok')
+          if (data.gameKey != gameKey.value) {
+            gameKey.value = data.gameKey
+            board.value = []
+            for (let i in data.state) {
+              const card = data.state[i]
+              board.value.push({
+                idx: i,
+                state: card.state,
+                word: card.word,
+                closed() { return this.state % 2 == 1 }
+              })
+            }
+          }
+          subscribed.value = true
+        }
     }
   })
 
