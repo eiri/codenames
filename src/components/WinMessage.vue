@@ -34,6 +34,10 @@ div {
   padding-left: 1rem;
 }
 
+img {
+  height: 1.3rem;
+}
+
 .red {
   color: var(--vt-c-strawberry);
 }
