@@ -3,17 +3,19 @@ import Ably from 'ably'
 export default {
   install(app) {
     const ablyAPIKey = import.meta.env.VITE_ABLY_API_KEY
-    // const uid = Math.random().toString(16).slice(2)
-    let uid = 'eiri'
-    if (navigator.userAgent.includes("Safari")) {
-      uid = 'not_eiri'
+
+    const newBroker = (username) => {
+      const ably = new Ably.Realtime({
+        key: ablyAPIKey,
+        clientId: username,
+        autoConnect: false,
+        transportParams: { heartbeatInterval: 300000 },
+      })
+
+      return ably
     }
-    const ably = new Ably.Realtime({
-      key: ablyAPIKey,
-      clientId: uid,
-    })
 
     // app.config.globalProperties.broker = ably
-    app.provide('broker', ably)
+    app.provide('broker', newBroker)
   }
 }

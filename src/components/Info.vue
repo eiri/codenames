@@ -19,6 +19,9 @@ const { gameKey, score, captainView } = storeToRefs(store)
       <label for="captain">
         <img src="../assets/pirate-hat.svg" />
       </label>
+      <router-link to="/">
+        <img src="../assets/logout.svg" />
+      </router-link>
     </div>
   </div>
 </template>
@@ -67,6 +70,15 @@ label:after {
   transition: 0.1s;
 }
 
+input:checked + label {
+  background: var(--vt-c-dark-sage);
+}
+
+input:checked + label:after {
+  left: calc(100% - 5px);
+  transform: translateX(-100%);
+}
+
 img {
   height: 2rem;
 }
@@ -75,12 +87,7 @@ img.down {
   opacity: 0.2;
 }
 
-input:checked + label {
-  background: var(--vt-c-dark-sage);
-}
-
-input:checked + label:after {
-  left: calc(100% - 5px);
-  transform: translateX(-100%);
+a {
+  margin-left: 2rem;
 }
 </style>

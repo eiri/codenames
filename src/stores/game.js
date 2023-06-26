@@ -7,72 +7,98 @@ import { CardState } from '../assets/states.js'
 
 export const useGameStore = defineStore('game', () => {
   const broker = inject('broker')
-  const channel = broker.channels.get('game') // FIXME game-${room number}
 
-  channel.presence.enter()
-  /*
-  FIXME: this is for future members list
-  channel.presence.subscribe('enter', (member) => {
-    console.log(`${member.clientId} entered`)
-  });
-  */
+  let server = undefined
+  let channel = undefined
+  const connect = (username) => {
+    server = broker(username)
+    server.connect()
 
-  channel.presence.get((err, members) => {
-    if (err != null || members.length == 0) {
-      // assume this client is the first one
-      console.log('subscribed: ok')
-      subscribed.value = true
-    } else {
-      // FIXME: race here if top ack client quit after ansering,
-      // but that's ok for now
-      channel.publish('reqState', {
-        from: broker.options.clientId,
-        to: members[0].clientId,
-      })
-    }
-  });
+    channel = server.channels.get('game') // FIXME game-${room number}
 
+    channel.presence.enter()
+    /*
+    FIXME: this is for future members list
+    channel.presence.subscribe('enter', (member) => {
+      console.log(`${member.clientId} entered`)
+    });
+    */
 
-  channel.subscribe(({name, data}) => {
-    switch (name) {
-      case 'open':
-        open(data.idx)
-        break;
-      case 'newGame':
-        if (data.gameKey != gameKey.value) {
-          gameKey.value = data.gameKey
-          newGame()
-        }
-        break;
-      case 'reqState':
-        if (data.to == broker.options.clientId) {
-          channel.publish('ackState', {
-            gameKey: gameKey.value,
-            state: board.value.map(c => ({state: c.state, word: c.word})),
-            to: data.from,
-          })
-        }
-        break;
-      case 'ackState':
-        if (data.to == broker.options.clientId) {
-          console.log('subscribed: ok')
+    channel.presence.get((err, members) => {
+      if (err != null) {
+          console.error(err)
+          return
+      }
+      console.info(`members: ${members.length}`)
+      if (members.length == 0) {
+        // assume this player is the first one
+        console.info('subscribed: ok')
+        subscribed.value = true
+      } else {
+        // FIXME: race here if top ack client quit after ansering,
+        // but that's ok for now
+        // ask game state from a first presented player
+        console.debug(`reqState(${members[0].clientId}): ->`)
+        channel.publish('reqState', {
+          from: server.options.clientId,
+          to: members[0].clientId,
+        })
+      }
+    });
+
+    channel.subscribe(({name, data}) => {
+      switch (name) {
+        case 'open':
+          open(data.idx)
+          break;
+        case 'newGame':
           if (data.gameKey != gameKey.value) {
             gameKey.value = data.gameKey
-            board.value = []
-            for (let i in data.state) {
-              const card = data.state[i]
-              board.value.push({
-                idx: i,
-                state: card.state,
-                word: card.word,
-                closed() { return this.state % 2 == 1 }
-              })
-            }
+            newGame()
           }
-          subscribed.value = true
-        }
-    }
-  })
+          break;
+        case 'reqState':
+          if (data.to == server.options.clientId) {
+            console.debug('reqState: <-')
+            console.debug(`ackState(${data.from}): ->`)
+            channel.publish('ackState', {
+              gameKey: gameKey.value,
+              state: board.value.map(c => ({state: c.state, word: c.word})),
+              to: data.from,
+            })
+          }
+          break;
+        case 'ackState':
+          if (data.to == server.options.clientId) {
+            console.debug(`ackState: <-`)
+            console.debug(data.gameKey)
+            console.debug(data.state)
+            if (data.gameKey != gameKey.value) {
+              gameKey.value = data.gameKey
+              board.value = []
+              for (let i in data.state) {
+                const card = data.state[i]
+                board.value.push({
+                  idx: i,
+                  state: card.state,
+                  word: card.word,
+                  closed() { return this.state % 2 == 1 }
+                })
+              }
+            }
+            subscribed.value = true
+            console.info('subscribed: ok')
+          }
+      }
+    })
+  }
+
+  const disconnect = () => {
+    console.info('disconnect')
+    channel.unsubscribe()
+    server.channels.release()
+    server.close()
+  }
 
   const board = ref([])
   const boardSize = ref(25)
@@ -180,6 +206,14 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  const $reset = () => {
+    board.value = []
+    boardSize.value = 25
+    gameKey.value = 'room+date'
+    subscribed.value = false
+    captainView.value = false
+  }
+
   return { gameKey, boardSize, score, captainView, subscribed,
-    board, open, newGame, randomWord }
+    board, open, connect, disconnect, newGame, $reset, randomWord }
 })

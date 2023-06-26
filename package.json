@@ -12,7 +12,8 @@
     "ably": "^1.2.40",
     "esm-seedrandom": "^3.0.5",
     "pinia": "^2.0.36",
-    "vue": "^3.3.2"
+    "vue": "^3.3.2",
+    "vue-router": "^4.2.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",

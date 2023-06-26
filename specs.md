@@ -47,8 +47,9 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 ### ToDo
 
-- uniq userid
 - room for game with a route
+- encrypt broker init and use a room pass as a key for decryption
+  so there will be no need to use lambdas to secure api key
 
 ## Alternative message bus
 
