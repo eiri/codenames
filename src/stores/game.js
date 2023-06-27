@@ -100,8 +100,9 @@ export const useGameStore = defineStore('game', () => {
     server.close()
   }
 
+  const boardSize = 25
+
   const board = ref([])
-  const boardSize = ref(25)
   const gameKey = ref('room+date')
   const subscribed = ref(false)
   const captainView = ref(false)
@@ -185,10 +186,10 @@ export const useGameStore = defineStore('game', () => {
 
 
   const newGame = () => {
-    console.log(`new game ${gameKey.value}, board size ${boardSize.value}`)
+    console.log(`new game ${gameKey.value}`)
     rnd = prng_alea(gameKey.value)
-    const cards = newCards(boardSize.value)
-    const words = newWords(boardSize.value)
+    const cards = newCards(boardSize)
+    const words = newWords(boardSize)
 
     board.value = []
     for (let i in cards) {
@@ -208,12 +209,11 @@ export const useGameStore = defineStore('game', () => {
 
   const $reset = () => {
     board.value = []
-    boardSize.value = 25
     gameKey.value = 'room+date'
     subscribed.value = false
     captainView.value = false
   }
 
-  return { gameKey, boardSize, score, captainView, subscribed,
+  return { gameKey, score, captainView, subscribed,
     board, open, connect, disconnect, newGame, $reset, randomWord }
 })

@@ -1,36 +1,19 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { storeToRefs } from 'pinia'
-
-import { useGameStore } from '../stores/game'
+import { ref, toRefs } from 'vue'
 
 import Card from './Card.vue'
 
 
-const store = useGameStore()
-
 const cols = ref(5)
-const rows = ref(5)
-const { board, boardSize } = storeToRefs(store)
-const { connect, disconnect, newGame } = store
 
-const idx = (col, row) => row * cols.value + col
-
-onMounted(() => {
-  console.log('Screen: onMounted')
-
-  const username = localStorage.getItem("username")
-  connect(username)
-
-  boardSize.value = cols.value * rows.value
-  newGame()
+const props = defineProps({
+  board: {
+    type: Array,
+    required: true
+  }
 })
 
-onUnmounted(() => {
-  console.log('Screen: onUnmounted')
-  store.$reset()
-  disconnect()
-})
+const { board } = toRefs(props);
 </script>
 
 <template>
