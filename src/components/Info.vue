@@ -5,17 +5,7 @@ import { useGameStore } from '../stores/game'
 
 const store = useGameStore()
 const { gameKey, score, captainView } = storeToRefs(store)
-const { randomWord, newGame } = store
-
-const nextGame = () => {
-  // FIXME: it is possible to get same board in a single session
-  // so better is to keep fixed sized table of unique words
-  // to make sure there are at least N unique boards
-  let word = gameKey.value
-  do { word = randomWord() } while (word == gameKey.value)
-  gameKey.value = word
-  newGame()
-}
+const { nextGame } = store
 </script>
 
 <template>

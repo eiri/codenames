@@ -10,11 +10,29 @@ export const useGameStore = defineStore('game', () => {
 
   let server = undefined
   let channel = undefined
-  const connect = (username) => {
+
+  const boardSize = 25
+
+  const board = ref(Array(boardSize).fill().map(() => {
+    return {
+      word: 'колокольня',
+      state: CardState.WhiteClosed,
+      closed() { return this.state % 2 == 1 }
+    }
+  }))
+
+  const gameKey = ref('')
+  const subscribed = ref(false)
+  const captainView = ref(false)
+
+  let rnd = prng_alea(gameKey.value)
+
+
+  const connect = (username, room) => {
     server = broker(username)
     server.connect()
 
-    channel = server.channels.get('game') // FIXME game-${room number}
+    channel = server.channels.get(`room${room}`)
 
     /*
     FIXME: this is for future members list
@@ -31,7 +49,10 @@ export const useGameStore = defineStore('game', () => {
       console.info(`members: ${members.length}`)
       if (members.length == 0) {
         // assume this player is the first one
-        console.info('subscribed: ok')
+        const now = new Date().toJSON()
+        gameKey.value = `${room}-${now}`
+        console.info(`subscribed: ok (${gameKey.value})`)
+        nextGame()
         channel.presence.enter()
         subscribed.value = true
       } else {
@@ -49,12 +70,15 @@ export const useGameStore = defineStore('game', () => {
     channel.subscribe(({name, data}) => {
       switch (name) {
         case 'open':
+          console.debug(`open: <- (${data.idx})`)
           open(data.idx)
           break;
-        case 'newGame':
+        case 'nextGame':
+          console.debug(`nextGame: <- (${data.gameKey})`)
           if (data.gameKey != gameKey.value) {
             gameKey.value = data.gameKey
-            newGame()
+            rnd = prng_alea(gameKey.value)
+            buildGame()
           }
           break;
         case 'reqState':
@@ -86,7 +110,7 @@ export const useGameStore = defineStore('game', () => {
                 })
               }
             }
-            console.info('subscribed: ok')
+            console.info(`subscribed: ok ${gameKey.value}`)
             channel.presence.enter()
             subscribed.value = true
           }
@@ -101,22 +125,11 @@ export const useGameStore = defineStore('game', () => {
     server.close()
   }
 
-  const boardSize = 25
-
-  const board = ref([])
-  const gameKey = ref('room+date')
-  const subscribed = ref(false)
-  const captainView = ref(false)
-
-  let rnd = prng_alea(gameKey.value)
-
-  const randomWord = () => {
-    const randomIndex = Math.floor(rnd() * words.length);
-    return words[randomIndex];
-  }
-
   const score = computed(() => {
     let score = {red: 0, blue: 0, gameOver: 'none'}
+    if (!subscribed.value) {
+      return score
+    }
     board.value.forEach((c) => {
       switch (c.state) {
         case CardState.RedClosed:
@@ -130,11 +143,11 @@ export const useGameStore = defineStore('game', () => {
        }
     })
 
-    if (score.gameOver =='none' && score.red == 0) {
+    if (score.gameOver == 'none' && score.red == 0) {
       score.gameOver = 'red'
     }
 
-    if (score.gameOver =='none' && score.blue == 0) {
+    if (score.gameOver == 'none' && score.blue == 0) {
       score.gameOver = 'blue'
     }
 
@@ -180,17 +193,39 @@ export const useGameStore = defineStore('game', () => {
     return cards
   }
 
-  const newWords = (size) => {
+  const randomWord = () => {
+    const randomIndex = Math.floor(rnd() * words.length);
+    return words[randomIndex];
+  }
+
+  const randomWords = size => {
     // FIXME: refactor to uniqueRandomWords(size) as this can have duplicates
     return Array(size).fill().map(randomWord)
   }
 
+  const nextWord = () => {
+    let word = gameKey.value
+    do { word = randomWord() } while (word == gameKey.value)
+    return word
+  }
 
-  const newGame = () => {
-    console.log(`new game ${gameKey.value}`)
+  // FIXME: it is possible to get same board in a single session
+  // so better is to keep fixed sized table of unique words
+  // to make sure there are at least N unique boards
+  const nextGame = () => {
+    gameKey.value = nextWord()
     rnd = prng_alea(gameKey.value)
+    buildGame()
+    if (subscribed.value) {
+      channel.publish('nextGame', {gameKey: gameKey.value})
+    }
+  }
+
+  const buildGame = () => {
+    console.log(`new game ${gameKey.value}`)
+
     const cards = newCards(boardSize)
-    const words = newWords(boardSize)
+    const words = randomWords(boardSize)
 
     board.value = []
     for (let i in cards) {
@@ -203,18 +238,21 @@ export const useGameStore = defineStore('game', () => {
     }
 
     captainView.value = false
-    if (subscribed.value) {
-      channel.publish('newGame', {gameKey: gameKey.value})
-    }
   }
 
   const $reset = () => {
-    board.value = []
-    gameKey.value = 'room+date'
+    board.value = Array(boardSize).fill().map(() => {
+      return {
+        word: 'колокольня',
+        state: CardState.WhiteClosed,
+        closed() { return this.state % 2 == 1 }
+      }
+    })
+    gameKey.value = ''
     subscribed.value = false
     captainView.value = false
   }
 
   return { gameKey, score, captainView, subscribed,
-    board, open, connect, disconnect, newGame, $reset, randomWord }
+    board, open, connect, disconnect, nextGame, $reset }
 })

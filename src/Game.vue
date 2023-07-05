@@ -9,19 +9,17 @@ import { useGameStore } from './stores/game'
 
 const store = useGameStore()
 const { board } = storeToRefs(store)
-const { connect, disconnect, newGame } = store
+const { connect, disconnect } = store
 
 onMounted(() => {
-  console.log('Game: onMounted')
-
   const username = localStorage.getItem("username")
-  connect(username)
-
-  newGame()
+  const room = localStorage.getItem("room")
+  console.debug(`Game: onMounted ${username} ${room}`)
+  connect(username, room)
 })
 
 onUnmounted(() => {
-  console.log('Game: onUnmounted')
+  console.debug('Game: onUnmounted')
   store.$reset()
   disconnect()
 })
