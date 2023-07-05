@@ -28,7 +28,6 @@
 /* semantic color variables for this project */
 :root {
   --font-serif: 'Playfair', serif;
-  --font-sans: 'Source Sans Pro', sans-serif;
 
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);

@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 
 import Info from './components/Info.vue'
 import Screen from './components/Screen.vue'
-import Score from './components/Score.vue'
 import { useGameStore } from './stores/game'
 
 
@@ -29,14 +28,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header>
-    <Info />
-  </header>
   <main>
     <Screen :board="board" />
   </main>
   <footer>
-    <Score />
+    <Info />
   </footer>
 </template>
 
