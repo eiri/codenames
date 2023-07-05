@@ -16,7 +16,6 @@ export const useGameStore = defineStore('game', () => {
 
     channel = server.channels.get('game') // FIXME game-${room number}
 
-    channel.presence.enter()
     /*
     FIXME: this is for future members list
     channel.presence.subscribe('enter', (member) => {
@@ -33,6 +32,7 @@ export const useGameStore = defineStore('game', () => {
       if (members.length == 0) {
         // assume this player is the first one
         console.info('subscribed: ok')
+        channel.presence.enter()
         subscribed.value = true
       } else {
         // FIXME: race here if top ack client quit after ansering,
@@ -86,8 +86,9 @@ export const useGameStore = defineStore('game', () => {
                 })
               }
             }
-            subscribed.value = true
             console.info('subscribed: ok')
+            channel.presence.enter()
+            subscribed.value = true
           }
       }
     })
