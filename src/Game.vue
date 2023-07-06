@@ -14,8 +14,9 @@ const { connect, disconnect } = store
 onMounted(() => {
   const username = localStorage.getItem("username")
   const room = localStorage.getItem("room")
+  //FIXME: return to root with error if not found
   console.debug(`Game: onMounted ${username} ${room}`)
-  connect(username, room)
+  connect()
 })
 
 onUnmounted(() => {

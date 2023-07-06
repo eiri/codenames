@@ -4,18 +4,13 @@ export default {
   install(app) {
     const ablyAPIKey = import.meta.env.VITE_ABLY_API_KEY
 
-    const newBroker = (username) => {
-      const ably = new Ably.Realtime({
-        key: ablyAPIKey,
-        clientId: username,
-        autoConnect: false,
-        transportParams: { heartbeatInterval: 300000 },
-      })
-
-      return ably
-    }
+    const ably = new Ably.Realtime({
+      key: ablyAPIKey,
+      autoConnect: false,
+      transportParams: { heartbeatInterval: 300000 },
+    })
 
     // app.config.globalProperties.broker = ably
-    app.provide('broker', newBroker)
+    app.provide('broker', ably)
   }
 }

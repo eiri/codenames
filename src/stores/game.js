@@ -1,3 +1,5 @@
+import Ably from 'ably'
+
 import { prng_alea } from 'esm-seedrandom';
 import { ref, computed, inject } from 'vue'
 import { defineStore } from 'pinia'
@@ -6,130 +8,114 @@ import { words } from '../assets/words.js'
 import { CardState } from '../assets/states.js'
 
 export const useGameStore = defineStore('game', () => {
-  const broker = inject('broker')
 
-  let server = undefined
-  let channel = undefined
+  //FIXME throw error if any of those are empty strings/undefined
+  const username = localStorage.getItem("username")
+  const room = localStorage.getItem("room")
+
+  const broker = inject('broker')
+  let channel = broker.channels.get(`room${room}`)
 
   const boardSize = 25
 
   const board = ref(Array(boardSize).fill().map(() => {
     return {
-      word: 'колокольня',
-      state: CardState.WhiteClosed,
+      word: '',
+      state: CardState.WhiteOpened,
       closed() { return this.state % 2 == 1 }
     }
   }))
 
-  const gameKey = ref('')
-  const subscribed = ref(false)
-  const captainView = ref(false)
-
+  const gameKey = ref(self.crypto.randomUUID())
   let rnd = prng_alea(gameKey.value)
 
+  const captainView = ref(false)
 
-  const connect = (username, room) => {
-    server = broker(username)
-    server.connect()
+  const connect = () => {
+    console.debug('connect')
+    broker.connect()
+  }
 
-    channel = server.channels.get(`room${room}`)
+  broker.connection.on((stateChange) => {
+    console.debug(`connection state ${JSON.stringify(stateChange)}`)
+  })
 
-    /*
-    FIXME: this is for future members list
-    channel.presence.subscribe('enter', (member) => {
-      console.log(`${member.clientId} entered`)
-    });
-    */
+  const disconnect = () => {
+    console.debug('disconnect')
+    broker.close()
+  }
 
+  /*
+  FIXME: this is for future members list
+  channel.presence.subscribe('enter', (member) => {
+    console.log(`${member.clientId} entered`)
+  });
+  */
+
+  const syncState = () => {
     channel.presence.get((err, members) => {
       if (err != null) {
           console.error(err)
           return
       }
-      console.info(`members: ${members.length}`)
+      console.debug(`members: ${members.length}`)
       if (members.length == 0) {
         // assume this player is the first one
-        const now = new Date().toJSON()
-        gameKey.value = `${room}-${now}`
-        console.info(`subscribed: ok (${gameKey.value})`)
+        console.debug(`subscribed: ok (${gameKey.value})`)
         nextGame()
-        channel.presence.enter()
-        subscribed.value = true
+        channel.presence.enterClient(username)
       } else {
         // FIXME: race here if top ack client quit after ansering,
         // but that's ok for now
         // ask game state from a first presented player
-        console.debug(`reqState(${members[0].clientId}): ->`)
-        channel.publish('reqState', {
-          from: server.options.clientId,
+        const payload = {
+          from: username,
           to: members[0].clientId,
-        })
-      }
-    });
-
-    channel.subscribe(({name, data}) => {
-      switch (name) {
-        case 'open':
-          console.debug(`open: <- (${data.idx})`)
-          open(data.idx)
-          break;
-        case 'nextGame':
-          console.debug(`nextGame: <- (${data.gameKey})`)
-          if (data.gameKey != gameKey.value) {
-            gameKey.value = data.gameKey
-            rnd = prng_alea(gameKey.value)
-            buildGame()
-          }
-          break;
-        case 'reqState':
-          if (data.to == server.options.clientId) {
-            console.debug('reqState: <-')
-            console.debug(`ackState(${data.from}): ->`)
-            channel.publish('ackState', {
-              gameKey: gameKey.value,
-              state: board.value.map(c => ({state: c.state, word: c.word})),
-              to: data.from,
-            })
-          }
-          break;
-        case 'ackState':
-          if (data.to == server.options.clientId) {
-            console.debug(`ackState: <-`)
-            console.debug(data.gameKey)
-            console.debug(data.state)
-            if (data.gameKey != gameKey.value) {
-              gameKey.value = data.gameKey
-              board.value = []
-              for (let i in data.state) {
-                const card = data.state[i]
-                board.value.push({
-                  idx: i,
-                  state: card.state,
-                  word: card.word,
-                  closed() { return this.state % 2 == 1 }
-                })
-              }
-            }
-            console.info(`subscribed: ok ${gameKey.value}`)
-            channel.presence.enter()
-            subscribed.value = true
-          }
+        }
+        console.debug(`publish reqState ${JSON.stringify(payload)}`)
+        channel.publish('reqState', payload)
       }
     })
   }
 
-  const disconnect = () => {
-    console.info('disconnect')
-    channel.unsubscribe()
-    server.channels.release()
-    server.close()
-  }
+  broker.connection.on('connected', syncState)
+
+  channel.subscribe('reqState', ({data}) => {
+    console.debug(`received reqState ${JSON.stringify(data)} as ${username}`)
+    if (data.to != username) {
+      return
+    }
+    const payload = {
+      gameKey: gameKey.value,
+      state: board.value.map(c => ({state: c.state, word: c.word})),
+      to: data.from,
+    }
+    console.debug(`publish ackState ${JSON.stringify(payload)}`)
+    channel.publish('ackState', payload)
+  })
+
+  channel.subscribe('ackState', ({data}) => {
+    console.debug(`received ackState ${JSON.stringify(data)} as ${username}`)
+    if (data.to != username || data.gameKey == gameKey.value) {
+      return
+    }
+    gameKey.value = data.gameKey
+    board.value = []
+    for (let i in data.state) {
+      const card = data.state[i]
+      board.value.push({
+        idx: i,
+        state: card.state,
+        word: card.word,
+        closed() { return this.state % 2 == 1 }
+      })
+    }
+    console.debug(`subscribed: ok (${gameKey.value})`)
+    channel.presence.enterClient(username)
+  })
 
   const score = computed(() => {
     let score = {red: 0, blue: 0, gameOver: 'none'}
-    if (!subscribed.value) {
-      return score
-    }
     board.value.forEach((c) => {
       switch (c.state) {
         case CardState.RedClosed:
@@ -151,6 +137,10 @@ export const useGameStore = defineStore('game', () => {
       score.gameOver = 'blue'
     }
 
+    if (score.red == 0 && score.blue == 0) {
+      score.gameOver = 'waiting'
+    }
+
     /*
     FIXME: maybe add later if we want this behaviour
     if (score.gameOver != 'none') {
@@ -168,14 +158,21 @@ export const useGameStore = defineStore('game', () => {
 
   const open = (idx) => {
     if (board.value[idx] && board.value[idx].closed()) {
-      board.value[idx].state -= 1
-      if (subscribed.value) {
-        channel.publish('open', {idx})
-      }
+      const payload = { idx }
+      console.debug(`publish open ${JSON.stringify(payload)}`)
+      channel.publish('open', payload)
     }
   }
 
-  const newCards = (size) => {
+  channel.subscribe('open', ({data}) => {
+    console.debug(`received open ${JSON.stringify(data)} as ${username}`)
+    const idx = data.idx
+    if (board.value[idx] && board.value[idx].closed()) {
+      board.value[idx].state -= 1
+    }
+  })
+
+  const randomCards = (size) => {
     const red = Math.round((size - 1) / 3)
     const blue = red - 1
     const white = size - red - blue - 1
@@ -214,17 +211,22 @@ export const useGameStore = defineStore('game', () => {
   // to make sure there are at least N unique boards
   const nextGame = () => {
     gameKey.value = nextWord()
-    rnd = prng_alea(gameKey.value)
-    buildGame()
-    if (subscribed.value) {
-      channel.publish('nextGame', {gameKey: gameKey.value})
-    }
+    const payload = {gameKey: gameKey.value}
+    console.debug(`publish nextGame ${JSON.stringify(payload)}`)
+    channel.publish('nextGame', payload)
   }
 
-  const buildGame = () => {
-    console.log(`new game ${gameKey.value}`)
+  channel.subscribe('nextGame', ({data}) => {
+    console.debug(`received nextGame ${JSON.stringify(data)} as ${username}`)
+    gameKey.value = data.gameKey
+    rnd = prng_alea(gameKey.value)
+    buildGame()
+  })
 
-    const cards = newCards(boardSize)
+  const buildGame = () => {
+    console.debug(`buildGame for ${gameKey.value}`)
+
+    const cards = randomCards(boardSize)
     const words = randomWords(boardSize)
 
     board.value = []
@@ -243,16 +245,15 @@ export const useGameStore = defineStore('game', () => {
   const $reset = () => {
     board.value = Array(boardSize).fill().map(() => {
       return {
-        word: 'колокольня',
-        state: CardState.WhiteClosed,
+        word: '',
+        state: CardState.WhiteOpened,
         closed() { return this.state % 2 == 1 }
       }
     })
     gameKey.value = ''
-    subscribed.value = false
     captainView.value = false
   }
 
-  return { gameKey, score, captainView, subscribed,
+  return { gameKey, score, captainView,
     board, open, connect, disconnect, nextGame, $reset }
 })
