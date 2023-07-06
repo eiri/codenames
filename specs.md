@@ -18,9 +18,6 @@ A multiplayer online board game.
 ### Fonts
 
 - Playfair
-- Source Sans Pro
-
-Source: https://inkbotdesign.com/font-combinations/
 
 ### Colors
 
@@ -47,7 +44,8 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 ### ToDo
 
-- room for game with a route
+- users list/presence
+- changes history
 - encrypt broker init and use a room pass as a key for decryption
   so there will be no need to use lambdas to secure api key
 
