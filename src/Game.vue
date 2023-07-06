@@ -31,7 +31,7 @@ onUnmounted(() => {
     <Screen :board="board" />
   </main>
   <footer>
-    <Info />
+    <Info :board="board" />
   </footer>
 </template>
 

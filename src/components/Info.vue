@@ -1,10 +1,65 @@
 <script setup>
+import { toRefs, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { useGameStore } from '../stores/game'
+import { CardState } from '../assets/states'
+
+
+const props = defineProps({
+  board: {
+    type: Array,
+    required: true
+  }
+})
+
+const { board } = toRefs(props)
+
+const score = computed(() => {
+  let score = {red: 0, blue: 0, gameOver: 'none'}
+
+  board.value.forEach((c) => {
+    switch (c.state) {
+      case CardState.RedClosed:
+        score.red += 1
+        break;
+      case CardState.BlueClosed:
+        score.blue += 1
+        break;
+      case CardState.BlackOpened:
+        score.gameOver = 'black'
+     }
+  })
+
+  if (score.gameOver == 'none' && score.red == 0) {
+    score.gameOver = 'red'
+  }
+
+  if (score.gameOver == 'none' && score.blue == 0) {
+    score.gameOver = 'blue'
+  }
+
+  if (score.red == 0 && score.blue == 0) {
+    score.gameOver = 'waiting'
+  }
+
+  /*
+  FIXME: maybe add later if we want this behaviour
+  if (score.gameOver != 'none') {
+    // all even are open, odds are closed, so just shift down
+    board.value.forEach((c) => {
+      if (c.closed()) {
+        c.state -= 1
+      }
+    })
+  }
+  */
+
+  return score
+})
 
 const store = useGameStore()
-const { gameKey, score, captainView } = storeToRefs(store)
+const { gameKey, captainView } = storeToRefs(store)
 const { nextGame } = store
 </script>
 

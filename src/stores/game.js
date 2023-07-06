@@ -4,8 +4,8 @@ import { prng_alea } from 'esm-seedrandom';
 import { ref, computed, inject } from 'vue'
 import { defineStore } from 'pinia'
 
-import { words } from '../assets/words.js'
-import { CardState } from '../assets/states.js'
+import { words } from '../assets/words'
+import { CardState } from '../assets/states'
 
 export const useGameStore = defineStore('game', () => {
 
@@ -114,48 +114,6 @@ export const useGameStore = defineStore('game', () => {
     channel.presence.enterClient(username)
   })
 
-  const score = computed(() => {
-    let score = {red: 0, blue: 0, gameOver: 'none'}
-    board.value.forEach((c) => {
-      switch (c.state) {
-        case CardState.RedClosed:
-          score.red += 1
-          break;
-        case CardState.BlueClosed:
-          score.blue += 1
-          break;
-        case CardState.BlackOpened:
-          score.gameOver = 'black'
-       }
-    })
-
-    if (score.gameOver == 'none' && score.red == 0) {
-      score.gameOver = 'red'
-    }
-
-    if (score.gameOver == 'none' && score.blue == 0) {
-      score.gameOver = 'blue'
-    }
-
-    if (score.red == 0 && score.blue == 0) {
-      score.gameOver = 'waiting'
-    }
-
-    /*
-    FIXME: maybe add later if we want this behaviour
-    if (score.gameOver != 'none') {
-      // all even are open, odds are closed, so just shift down
-      board.value.forEach((c) => {
-        if (c.closed()) {
-          c.state -= 1
-        }
-      })
-    }
-    */
-
-    return score
-  })
-
   const open = (idx) => {
     if (board.value[idx] && board.value[idx].closed()) {
       const payload = { idx }
@@ -254,6 +212,6 @@ export const useGameStore = defineStore('game', () => {
     captainView.value = false
   }
 
-  return { gameKey, score, captainView,
+  return { gameKey, captainView,
     board, open, connect, disconnect, nextGame, $reset }
 })
