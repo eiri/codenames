@@ -89,10 +89,11 @@ const { nextGame } = store
     <div class="blue">
       {{ score.blue }}
     </div>
-    <div>
-      <input type="checkbox" id="captain" v-model="captainView" />
-      <label for="captain">
-        <img src="../assets/crown.svg" />
+    <div class="nu">
+      <img class="crown" src="../assets/crown.svg" />
+      <label :class="captainView ? 'switch-on' : 'switch-off'" for="captain">
+        <input type="checkbox" id="captain" v-model="captainView" />
+        <div class="circle"></div>
       </label>
     </div>
     <div>
@@ -126,14 +127,13 @@ div {
 
 img {
   width: 2rem;
-  margin: auto;
+  margin-right: 0.4rem;
 }
 
 .key {
   position: relative;
   top: 0.4rem;
   right: -0.2rem;
-  width: 2rem;
 }
 
 .red {
@@ -174,41 +174,31 @@ button:active {
   transform: translateY(2px);
 }
 
-input[type=checkbox]{
-  height: 0;
-  width: 0;
-  visibility: hidden;
-}
-
 label {
-  cursor: pointer;
-  width: 3rem;
-  height: 2rem;
-  text-indent: -2.2rem;
-  background: var(--color-background-soft);
-  display: block;
-  border-radius: 1rem;
-  position: relative;
+  display: flex;
+  border-radius: 9999px;
+  height:2rem;
+  width: 4rem;
 }
 
-label:after {
-  content: '';
-  position: absolute;
-  top: 0.2rem;
-  left: 0.2rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  background: var(--color-text-light);
-  border-radius: 1rem;
-  transition: 0.1s;
+input[type=checkbox]{
+  display: none;
 }
 
-input:checked + label {
-  background: var(--color-green);
+.circle {
+  border-radius: 9999px;
+  width: 2rem;
+  background-color: var(--color-white);
 }
 
-input:checked + label:after {
-  left: calc(100% - 5px);
-  transform: translateX(-100%);
+.switch-on {
+  background-color: var(--color-green);
+  border: 1px solid var(--color-border-hover);
+}
+
+.switch-off {
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  justify-content: flex-end;
 }
 </style>
