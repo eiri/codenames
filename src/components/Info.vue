@@ -66,33 +66,33 @@ const { nextGame } = store
 <template>
   <div class="wrapper">
     <div>
-      <div class="middle-font" v-show="score.gameOver == 'none'">
-        <img src="../assets/key.svg" />
+      <div v-show="score.gameOver == 'none'">
+        <img class="key" src="../assets/key.svg" />
         {{gameKey}}
       </div>
-      <div class="large-font" v-show="score.gameOver == 'black'">
+      <div v-show="score.gameOver == 'black'">
         Both teams lost
       </div>
-      <div class="large-font red" v-show="score.gameOver == 'red'">
+      <div class="red" v-show="score.gameOver == 'red'">
         Red team won
       </div>
-      <div class="large-font blue" v-show="score.gameOver == 'blue'">
+      <div class="blue" v-show="score.gameOver == 'blue'">
         Blue team won
       </div>
     </div>
-    <div class="large-font red">
+    <div class="red">
       {{ score.red }}
     </div>
     <div>
       <button @click="nextGame">New game</button>
     </div>
-    <div class="large-font blue">
+    <div class="blue">
       {{ score.blue }}
     </div>
     <div>
       <input type="checkbox" id="captain" v-model="captainView" />
       <label for="captain">
-        <img src="../assets/pirate-hat.svg" />
+        <img src="../assets/crown.svg" />
       </label>
     </div>
     <div>
@@ -115,35 +115,35 @@ div.wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 1rem;
+  flex-direction: row;
   /*border: 1px solid red;*/
 }
 
-.middle-font {
-  font-size: 2rem;
-  line-height: 2rem
-}
-
-.middle-font img {
-  width: 1vw;
-}
-
-.large-font {
-  font-size: 3rem;
-}
-
-.red {
-  color: var(--vt-c-strawberry);
-}
-
-.blue {
-  color: var(--vt-c-beril-blue);
+div {
+  font-size: 2.4rem;
+  line-height: 2.4rem;
 }
 
 img {
-  width: 1.5vw;
+  width: 2rem;
   margin: auto;
 }
+
+.key {
+  position: relative;
+  top: 0.4rem;
+  right: -0.2rem;
+  width: 2rem;
+}
+
+.red {
+  color: var(--color-red);
+}
+
+.blue {
+  color: var(--color-blue);
+}
+
 
 /*
 img.down {
@@ -159,18 +159,18 @@ button {
   height: 3rem;
   padding: 0 1rem;
   margin: 0;
-  color: var(--vt-c-white-soft);
-  background-color: var(--vt-c-dark-sage);
+  color: var(--color-text-light);
+  background-color: var(--color-green);
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow-high);
   transition: 0.1s;
   text-align: center;
   display: inline-block;
 }
 
 button:active {
-  box-shadow: 0 0px 2px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: var(--box-shadow-low);
   transform: translateY(2px);
 }
 
@@ -185,7 +185,7 @@ label {
   width: 3rem;
   height: 2rem;
   text-indent: -2.2rem;
-  background: var(--vt-c-divider-light-1);
+  background: var(--color-background-soft);
   display: block;
   border-radius: 1rem;
   position: relative;
@@ -198,13 +198,13 @@ label:after {
   left: 0.2rem;
   width: 1.5rem;
   height: 1.5rem;
-  background: var(--color-background-soft);;
+  background: var(--color-text-light);
   border-radius: 1rem;
   transition: 0.1s;
 }
 
 input:checked + label {
-  background: var(--vt-c-dark-sage);
+  background: var(--color-green);
 }
 
 input:checked + label:after {

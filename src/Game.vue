@@ -27,6 +27,9 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <header>
+    codenames
+  </header>
   <main>
     <Screen :board="board" />
   </main>
@@ -37,6 +40,11 @@ onUnmounted(() => {
 
 <style scoped>
 header, main, footer {
-  padding: 0.5rem;
+  padding: 1rem;
 }
+
+header {
+  box-shadow: var(--box-shadow-low);
+}
+
 </style>

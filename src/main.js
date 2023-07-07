@@ -4,7 +4,7 @@ import { createApp } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 
-import broker from './plugin/broker.js'
+import broker from './plugin/broker'
 import App from './App.vue'
 import Home from './Home.vue'
 import Game from './Game.vue'

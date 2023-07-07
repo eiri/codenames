@@ -40,66 +40,67 @@ const cardClass = computed(() => {
 <style scoped>
 article {
   cursor: pointer;
-  height: 4vw;
+  font-size: 2rem;
+  height: 4.5rem;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-  transition: 0.3s;
+  box-shadow: var(--box-shadow-low);
+  transition: var(--animate-transition);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2vw;
 }
 
 article:hover, .open {
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border-hover);
+  box-shadow: var(--box-shadow-high);
 }
 
 /* black-open */
 .card-0 {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-black);
+  color: var(--color-text-light);
+  background-color: var(--color-black);
 }
 
 /* black-open */
 .card-1 {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-text-light-2);
+  color: var(--color-text-dark);
+  background-color: var(--color-black-light);
 }
 
 /* white-open */
 .card-2 {
-  color: var(--vt-c-black);
-  background-color: var(--vt-c-white);
+  color: var(--color-text-dark);
+  background-color: var(--color-white);
 }
 
 /* white-closed */
 .card-3 {
-  color: var(--vt-c-black);
-  background-color: var(--vt-c-lilac);
+  color: var(--color-text-dark);
+  background-color: var(--color-white-dark);
 }
 
-/* white-open */
+/* red-open */
 .card-4 {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-strawberry);
+  color: var(--color-text-light);
+  background-color: var(--color-red);
 }
 
 /* red-closed */
 .card-5 {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-peach);
+  color: var(--color-text-light);
+  background-color: var(--color-red-light);
 }
 
 /* blue-open */
 .card-6 {
-  color: var(--vt-c-white);
-  background-color: var(--vt-c-beril-blue);
+  color: var(--color-text-light);
+  background-color: var(--color-blue);
 }
 
 /* blue-closed */
 .card-7 {
-  color: var(--vt-c-black);
-  background-color: var(--vt-c-baby-blue);
+  color: var(--color-text-dark);
+  background-color: var(--color-blue-light);
 }
 </style>

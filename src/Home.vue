@@ -45,7 +45,7 @@ onMounted(() => {
         <label for="room">Room</label>
         <input
           type="text"
-          placeholder="Room #"
+          placeholder="#"
           autocomplete="off"
           id="room"
           v-model.lazy.trim="room"
@@ -84,12 +84,16 @@ onMounted(() => {
 }
 
 .error {
-  color: var(--vt-c-peach);
+  color: var(--color-red-light);
+}
+
+h1 {
+  text-align: center;
 }
 
 form {
-  height: 32rem;
-  width: 24rem;
+  width: 20vw;
+  height: 60vh;
   position: absolute;
   transform: translate(-50%,-50%);
   top: 50%;
@@ -98,62 +102,50 @@ form {
   background-color: rgba(111, 161, 187, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 0 40px rgba(8,7,16,0.6);
+  box-shadow: var(--box-shadow-high);
   padding: 2rem 1rem;
 }
 
 form * {
+  font-size: 1.2rem;
   font-family: var(--font-sans);
-  color: var(--color-background-mute);
+  color: var(--color-background);
   letter-spacing: 0.5px;
   outline: none;
   border: none;
 }
 
-form h1 {
-  font-family: var(--font-sans);
-  font-size: 1.4vw;
-  text-align: center;
-}
-
 label {
   display: block;
-  font-size: 1vw;
-  margin-top: 1rem;
+  margin: 2rem 0rem 1rem;
 }
 
 input {
-  display: block;
+  width: 19vw;
   height: 3rem;
-  width: 22rem;
-  font-size: 1vw;
+  display: block;
   background-color: rgba(111, 161, 187, 0.7);
-  border-radius: 3px;
-  padding: 0 1rem;
-  margin-top: 0.6rem;
+  border-radius: 4px;
+  padding: 0 0.5rem;
 }
 
 ::placeholder {
-  color: var(--color-background-mute);
+  color: var(--color-background);
+  opacity: 0.6
 }
 
 button {
-  font-size: 1.1vw;
+  width: 20vw;
   height: 3rem;
-  width: 24rem;
   margin-top: 6rem;
-  color: var(--color-text);
+  color: var(--color-text-dark);
   background-color: var(--color-background);
-  border-radius: 5px;
-  box-shadow: 2px 4px 4px 2px rgba(0,0,0,0.3);
-}
-
-button:focus {
-  box-shadow: 2px 4px 4px 2px rgba(0,0,0,0.3);
+  border-radius: 4px;
+  box-shadow: var(--box-shadow-high);
 }
 
 button:active {
-  box-shadow: 2px 4px 2px 1px rgba(0,0,0,0.5);
+  box-shadow: var(--box-shadow-low);
   transform: translateY(2px);
 }
 </style>

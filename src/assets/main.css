@@ -11,8 +11,9 @@ html, body {
 
 body {
   min-height: 100vh;
-  line-height: 1;
+  line-height: 1pt;
   color: var(--color-text);
-  background: var(--color-background);
+  font-size: 24pt;
   font-family: var(--font-serif);
+  background: var(--color-background);
 }
