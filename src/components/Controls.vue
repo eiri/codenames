@@ -59,17 +59,13 @@ const score = computed(() => {
 })
 
 const store = useGameStore()
-const { gameKey, captainView } = storeToRefs(store)
+const { captainView } = storeToRefs(store)
 const { nextGame } = store
 </script>
 
 <template>
   <div class="wrapper">
     <div>
-      <div v-show="score.gameOver == 'none'">
-        <img class="key" src="../assets/key.svg" />
-        {{gameKey}}
-      </div>
       <div v-show="score.gameOver == 'black'">
         Both teams lost
       </div>
@@ -96,18 +92,13 @@ const { nextGame } = store
         <div class="circle"></div>
       </label>
     </div>
-    <div>
-      <router-link to="/">
-        <img src="../assets/logout.svg" />
-      </router-link>
-    </div>
   </div>
 </template>
 
 <style scoped>
 div.wrapper {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) 0.68fr 0.28fr;
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   /*border: 1px solid blue;*/
 }

@@ -2,13 +2,14 @@
 import { onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
+import Info from './components/Info.vue'
 import Controls from './components/Controls.vue'
 import Screen from './components/Screen.vue'
 import { useGameStore } from './stores/game.js'
 
 
 const store = useGameStore()
-const { board } = storeToRefs(store)
+const { gameKey, board } = storeToRefs(store)
 const { connect, disconnect } = store
 
 onMounted(() => {
@@ -28,7 +29,7 @@ onUnmounted(() => {
 
 <template>
   <header>
-    codenames
+    <Info :gameKey="gameKey" />
   </header>
   <main>
     <Screen :board="board" />
