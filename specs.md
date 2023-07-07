@@ -47,7 +47,6 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 ### ToDo
 
-- sort out css mess
 - users list/presence
 - changes history
 - encrypt broker init and use a room pass as a key for decryption

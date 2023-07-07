@@ -2,9 +2,9 @@
 import { onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
-import Info from './components/Info.vue'
+import Controls from './components/Controls.vue'
 import Screen from './components/Screen.vue'
-import { useGameStore } from './stores/game'
+import { useGameStore } from './stores/game.js'
 
 
 const store = useGameStore()
@@ -34,7 +34,7 @@ onUnmounted(() => {
     <Screen :board="board" />
   </main>
   <footer>
-    <Info :board="board" />
+    <Controls :board="board" />
   </footer>
 </template>
 
