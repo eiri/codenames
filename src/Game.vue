@@ -9,7 +9,7 @@ import { useGameStore } from './stores/game.js'
 
 
 const store = useGameStore()
-const { gameKey, board } = storeToRefs(store)
+const { gameKey, players, board } = storeToRefs(store)
 const { connect, disconnect } = store
 
 onMounted(() => {
@@ -29,7 +29,7 @@ onUnmounted(() => {
 
 <template>
   <header>
-    <Info :gameKey="gameKey" />
+    <Info :gameKey="gameKey" :players="players" />
   </header>
   <main>
     <Screen :board="board" />

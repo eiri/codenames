@@ -25,7 +25,7 @@ const { board } = toRefs(props);
 <style scoped>
 div {
   display: grid;
-  grid-template-columns: repeat(v-bind('cols'), minmax(200px, 1fr));
+  grid-template-columns: repeat(v-bind('cols'), minmax(250px, 1fr));
   gap: 1rem;
 }
 

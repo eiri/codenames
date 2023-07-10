@@ -10,13 +10,17 @@ import { CardState } from '../assets/states'
 export const useGameStore = defineStore('game', () => {
 
   //FIXME throw error if any of those are empty strings/undefined
-  const username = localStorage.getItem("username")
+  let username = localStorage.getItem("username")
   const room = localStorage.getItem("room")
 
   const broker = inject('broker')
   let channel = broker.channels.get(`room${room}`)
 
   const boardSize = 25
+  // https://colorkit.co/palette/ffadad-ffd6a5-fdffb6-caffbf-9bf6ff-a0c4ff-bdb2ff-ffc6ff/
+  const palette = ["#ffadad","#ffd6a5","#fdffb6","#caffbf","#9bf6ff","#a0c4ff","#bdb2ff","#ffc6ff"]
+  // from https://stackoverflow.com/questions/18638900/javascript-crc32
+  const crc32=function(r){for(var a,o=[],c=0;c<256;c++){a=c;for(var f=0;f<8;f++)a=1&a?3988292384^a>>>1:a>>>1;o[c]=a}for(var n=-1,t=0;t<r.length;t++)n=n>>>8^o[255&(n^r.charCodeAt(t))];return(-1^n)>>>0};
 
   const board = ref(Array(boardSize).fill().map(() => {
     return {
@@ -26,13 +30,16 @@ export const useGameStore = defineStore('game', () => {
     }
   }))
 
+  const players = ref({})
+  const captainView = ref(false)
+
   const gameKey = ref(self.crypto.randomUUID())
   let rnd = prng_alea(gameKey.value)
 
-  const captainView = ref(false)
 
   const connect = () => {
     console.debug('connect')
+    username = localStorage.getItem("username")
     broker.connect()
   }
 
@@ -42,15 +49,10 @@ export const useGameStore = defineStore('game', () => {
 
   const disconnect = () => {
     console.debug('disconnect')
+    channel.presence.leaveClient(username)
+    username = ''
     broker.close()
   }
-
-  /*
-  FIXME: this is for future members list
-  channel.presence.subscribe('enter', (member) => {
-    console.log(`${member.clientId} entered`)
-  });
-  */
 
   const syncState = () => {
     channel.presence.get((err, members) => {
@@ -68,17 +70,48 @@ export const useGameStore = defineStore('game', () => {
         // FIXME: race here if top ack client quit after ansering,
         // but that's ok for now
         // ask game state from a first presented player
-        const payload = {
-          from: username,
-          to: members[0].clientId,
+        for (let i in members) {
+          const player = members[i].clientId
+          const playerData = {
+            name: player,
+            short: player[0],
+            color: palette[crc32(player) % palette.length],
+            captain: false,
+            team: 'white',
+          }
+          players.value[player] = playerData
+          if (i == 0) {
+            const payload = {
+              from: username,
+              to: player,
+            }
+            console.debug(`publish reqState ${JSON.stringify(payload)}`)
+            channel.publish('reqState', payload)
+          }
         }
-        console.debug(`publish reqState ${JSON.stringify(payload)}`)
-        channel.publish('reqState', payload)
       }
     })
   }
 
   broker.connection.on('connected', syncState)
+
+  channel.presence.subscribe('enter', (member) => {
+    console.debug(`presence enter member ${JSON.stringify(member)}`)
+    const player = member.clientId
+    const playerData = {
+      name: player,
+      short: player[0],
+      color: palette[crc32(player) % palette.length],
+      captain: false,
+      team: 'white',
+    }
+    players.value[player] = playerData
+  })
+
+  channel.presence.subscribe('leave', (member) => {
+    console.debug(`presence leave member ${JSON.stringify(member)}`)
+    delete players.value[member.clientId]
+  })
 
   channel.subscribe('reqState', ({data}) => {
     console.debug(`received reqState ${JSON.stringify(data)} as ${username}`)
@@ -201,6 +234,9 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const $reset = () => {
+    gameKey.value = ''
+    players.value = {}
+    captainView.value = false
     board.value = Array(boardSize).fill().map(() => {
       return {
         word: '',
@@ -208,10 +244,8 @@ export const useGameStore = defineStore('game', () => {
         closed() { return this.state % 2 == 1 }
       }
     })
-    gameKey.value = ''
-    captainView.value = false
   }
 
-  return { gameKey, captainView,
+  return { gameKey, players, captainView,
     board, open, connect, disconnect, nextGame, $reset }
 })

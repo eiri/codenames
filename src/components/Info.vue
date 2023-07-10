@@ -5,10 +5,11 @@ const props = defineProps({
   gameKey: {
     type: String,
     required: true
-  }
+  },
+  players: Object,
 })
 
-const { gameKey } = toRefs(props)
+const { gameKey, players } = toRefs(props)
 
 </script>
 
@@ -18,8 +19,15 @@ const { gameKey } = toRefs(props)
       <img class="key" src="../assets/key.svg" />
       {{gameKey}}
     </div>
-    <div class="right">
-      (U)
+    <div class="right avatars">
+      <div
+        class="avatar__item"
+        v-for="player in players"
+      >
+        <div class="avatar" :style="{'background-color': player.color}">
+          {{ player.short }}
+        </div>
+      </div>
     </div>
     <div class="right">
       <router-link to="/">
@@ -49,7 +57,6 @@ img {
   margin-right: 0.6rem;
 }
 
-
 .left {
   justify-content: left;
 }
@@ -58,4 +65,26 @@ img {
   justify-content: right;
 }
 
+.avatars {
+  display: flex;
+}
+
+.avatar__item {
+  margin-left: -0.25rem;
+}
+
+.avatar {
+  box-shadow: 0 0 0 0.25rem var(--color-white);
+
+  align-items: center;
+  display: flex;
+  justify-content: center;
+
+  font-family: var(--font-sans);
+  text-transform: capitalize;
+  height: 2.4rem;
+  width: 2.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+}
 </style>

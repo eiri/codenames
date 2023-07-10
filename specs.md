@@ -47,8 +47,6 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 ### ToDo
 
-- users list/presence
-- changes history
 - encrypt broker init and use a room pass as a key for decryption
   so there will be no need to use lambdas to secure api key
 
