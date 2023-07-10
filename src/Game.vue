@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import Info from './components/Info.vue'
@@ -8,15 +8,18 @@ import Screen from './components/Screen.vue'
 import { useGameStore } from './stores/game.js'
 
 
+const room = ref('')
+
 const store = useGameStore()
 const { gameKey, players, board } = storeToRefs(store)
 const { connect, disconnect } = store
 
 onMounted(() => {
   const username = localStorage.getItem("username")
-  const room = localStorage.getItem("room")
+  room.value = localStorage.getItem("room")
   //FIXME: return to root with error if not found
-  console.debug(`Game: onMounted ${username} ${room}`)
+  //FIXME: return to login with error if URL room doesn't match storage
+  console.debug(`Game: onMounted ${username} ${room.value}`)
   connect()
 })
 
@@ -29,7 +32,7 @@ onUnmounted(() => {
 
 <template>
   <header>
-    <Info :gameKey="gameKey" :players="players" />
+    <Info :room="room" :gameKey="gameKey" :players="players" />
   </header>
   <main>
     <Screen :board="board" />

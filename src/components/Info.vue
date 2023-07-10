@@ -7,14 +7,18 @@ const props = defineProps({
     required: true
   },
   players: Object,
+  room: String,
 })
 
 const { gameKey, players } = toRefs(props)
-
 </script>
 
 <template>
   <div class="wrapper">
+    <div class="left">
+      <img class="key" src="../assets/room.svg" />
+      {{room}}
+    </div>
     <div class="left">
       <img class="key" src="../assets/key.svg" />
       {{gameKey}}
@@ -40,7 +44,7 @@ const { gameKey, players } = toRefs(props)
 <style scoped>
 div.wrapper {
   display: grid;
-  grid-template-columns: repeat(2, 1fr) 0.1fr;
+  grid-template-columns: 0.1fr repeat(2, 1fr) 0.1fr;
   gap: 1rem;
 }
 
@@ -48,13 +52,14 @@ div.wrapper {
   display: flex;
   align-items: center;
   flex-direction: row;
-  font-size: 1.6rem;
-  line-height: 1.6rem;
+  font-family: var(--font-sans);
+  font-size: 1.4rem;
+  line-height: 1.4rem;
 }
 
 img {
   width: 1.6rem;
-  margin-right: 0.6rem;
+  margin-right: 0.3rem;
 }
 
 .left {
@@ -80,7 +85,6 @@ img {
   display: flex;
   justify-content: center;
 
-  font-family: var(--font-sans);
   text-transform: capitalize;
   height: 2.4rem;
   width: 2.4rem;
