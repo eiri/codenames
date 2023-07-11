@@ -1,19 +1,10 @@
 <script setup>
-import { toRefs, computed } from 'vue'
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { useGameStore } from '../stores/game.js'
 import { CardState } from '../assets/states.js'
 
-
-const props = defineProps({
-  board: {
-    type: Array,
-    required: true
-  }
-})
-
-const { board } = toRefs(props)
 
 const score = computed(() => {
   let score = {red: 0, blue: 0, gameOver: 'none'}
@@ -59,7 +50,7 @@ const score = computed(() => {
 })
 
 const store = useGameStore()
-const { captainView } = storeToRefs(store)
+const { captainView, board } = storeToRefs(store)
 const { nextGame } = store
 </script>
 

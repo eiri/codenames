@@ -1,19 +1,14 @@
 <script setup>
-import { ref, toRefs } from 'vue'
+import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
 
+import { useGameStore } from '../stores/game.js'
 import Card from './Card.vue'
 
 
 const cols = ref(5)
-
-const props = defineProps({
-  board: {
-    type: Array,
-    required: true
-  }
-})
-
-const { board } = toRefs(props);
+const store = useGameStore()
+const { board } = storeToRefs(store)
 </script>
 
 <template>

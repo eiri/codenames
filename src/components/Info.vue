@@ -1,16 +1,11 @@
 <script setup>
-import { toRefs } from 'vue'
+import { storeToRefs } from 'pinia'
 
-const props = defineProps({
-  gameKey: {
-    type: String,
-    required: true
-  },
-  players: Object,
-  room: String,
-})
+import { useGameStore } from '../stores/game.js'
 
-const { gameKey, players } = toRefs(props)
+
+const store = useGameStore()
+const { room, gameKey, players } = storeToRefs(store)
 </script>
 
 <template>
