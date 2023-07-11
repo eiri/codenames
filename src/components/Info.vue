@@ -75,6 +75,7 @@ img {
 
 .avatar {
   box-shadow: 0 0 0 0.25rem var(--color-white);
+  background: linear-gradient(to bottom right, rgba(0,0,0,0), rgba(255,255,255,1));
 
   align-items: center;
   display: flex;
