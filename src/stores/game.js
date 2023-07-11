@@ -32,7 +32,12 @@ export const useGameStore = defineStore('game', () => {
   const gameKey = ref(self.crypto.randomUUID())
   let rnd = prng_alea(gameKey.value)
 
-  const broker = inject('broker')
+  const ablyAPIKey = import.meta.env.VITE_ABLY_API_KEY
+  let broker = new Ably.Realtime({
+    key: ablyAPIKey,
+    autoConnect: false,
+    transportParams: { heartbeatInterval: 300000 },
+  })
   let channel = broker.channels.get(`room${room.value}`)
 
   const connect = () => {
