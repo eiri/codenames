@@ -49,6 +49,8 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 - encrypt broker init and use a room pass as a key for decryption
   so there will be no need to use lambdas to secure api key
+- try to make captainKey into player property, marshal it on presense member data, show it to others and restrict it to two, one on each team
+- better story on auth, it really should use tokens...
 
 ## Alternative message bus
 
