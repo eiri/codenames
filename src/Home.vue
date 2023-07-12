@@ -7,14 +7,22 @@ const router = useRouter()
 const username = ref('')
 const room = ref('')
 const password = ref('')
-const error = ref(false)
+const error = ref('')
 
 const login = (e) => {
-  if (room.value == '' || username.value == '' || password.value == '') {
-    error.value = true
+  if (username.value == '') {
+    error.value = `Missing username`
     return false
   }
-  error.value = false
+  if (room.value == '') {
+    error.value = `Missing room`
+    return false
+  }
+  if (password.value == '') {
+    error.value = `Missing password`
+    return false
+  }
+  error.value = ''
   // store values for connect
   localStorage.setItem("room", room.value)
   localStorage.setItem("username", username.value)
@@ -31,7 +39,8 @@ onMounted(() => {
 <template>
   <div class="overlay">
     <form @submit.prevent="login">
-        <h1 :class="{error: error}">Login</h1>
+        <h1 v-show="error == ''">Login</h1>
+        <h1 v-show="error" class="error">{{error}}</h1>
 
         <label for="username">Username</label>
         <input
