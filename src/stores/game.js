@@ -24,9 +24,8 @@ export const useGameStore = defineStore('game', () => {
 
   const players = ref({})
   const isCaptain = ref(false)
-
-  const gameKey = ref(self.crypto.randomUUID())
-  let rnd = prng_alea(gameKey.value)
+  const gameKey = ref('')
+  let rnd = prng_alea(self.crypto.randomUUID())
 
   const ablyAPIKey = import.meta.env.VITE_ABLY_API_KEY
 
@@ -35,9 +34,10 @@ export const useGameStore = defineStore('game', () => {
     autoConnect: false,
     transportParams: { heartbeatInterval: 300000 },
   })
-  let username
-  let room
-  let channel
+
+  let username = null
+  let room = null
+  let channel = null
 
   // callbacks
   const syncState = (err, members) => {
@@ -149,6 +149,11 @@ export const useGameStore = defineStore('game', () => {
     username = localStorage.getItem("username")
     room = localStorage.getItem("room")
 
+    if (username == null || room == null) {
+      console.error(`missing username or room ${username} ${room}`)
+      return
+    }
+
     channel = broker.channels.get(`room-${room}`)
 
     // debug logger
@@ -174,12 +179,17 @@ export const useGameStore = defineStore('game', () => {
 
   const disconnect = () => {
     console.debug('disconnect')
+    if (channel == null) {
+      console.error('channel is null')
+      return
+    }
     channel.presence.leaveClient(username, () => {
       channel.presence.unsubscribe()
       channel.unsubscribe()
       channel.detach()
       broker.connection.off()
       broker.close()
+      channel = null
     })
   }
 
