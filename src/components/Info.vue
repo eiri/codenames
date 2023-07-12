@@ -1,11 +1,12 @@
 <script setup>
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { useGameStore } from '../stores/game.js'
 
-
+const room = ref(localStorage.getItem("room"))
 const store = useGameStore()
-const { room, gameKey, players } = storeToRefs(store)
+const { gameKey, players } = storeToRefs(store)
 </script>
 
 <template>

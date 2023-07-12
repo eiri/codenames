@@ -15,14 +15,14 @@ onMounted(() => {
   const room = localStorage.getItem("room")
   //FIXME: return to root with error if not found
   //FIXME: return to login with error if URL room doesn't match storage
-  console.debug(`Game: onMounted ${username} ${room.value}`)
+  console.debug(`Game: onMounted ${username} ${room}`)
   connect()
 })
 
 onUnmounted(() => {
   console.debug('Game: onUnmounted')
-  store.$reset()
   disconnect()
+  store.$reset()
 })
 </script>
 

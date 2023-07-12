@@ -22,17 +22,11 @@ export const useGameStore = defineStore('game', () => {
     }
   }))
 
-
   const players = ref({})
   const captainView = ref(false)
 
   const gameKey = ref(self.crypto.randomUUID())
   let rnd = prng_alea(gameKey.value)
-
-
-  //FIXME throw error if any of those are empty strings/undefined
-  const username = ref(localStorage.getItem("username"))
-  const room = ref(localStorage.getItem("room"))
 
   const ablyAPIKey = import.meta.env.VITE_ABLY_API_KEY
 
@@ -41,14 +35,11 @@ export const useGameStore = defineStore('game', () => {
     autoConnect: false,
     transportParams: { heartbeatInterval: 300000 },
   })
-
-  let channel = broker.channels.get(`room${room.value}`)
+  let username
+  let room
+  let channel
 
   // callbacks
-  const connectionLogger = (stateChange) => {
-    console.debug(`connection state ${JSON.stringify(stateChange)}`)
-  }
-
   const syncState = (err, members) => {
     if (err != null) {
         console.error(err)
@@ -59,29 +50,29 @@ export const useGameStore = defineStore('game', () => {
       // assume this player is the first one
       console.debug(`subscribed: ok (${gameKey.value})`)
       nextGame()
-      channel.presence.enterClient(username.value)
-    } else {
+      channel.presence.enterClient(username)
+      return
+    }
+    for (let i in members) {
+      const player = members[i].clientId
+      const playerData = {
+        name: player,
+        short: player[0],
+        color: palette[crc32(player) % palette.length],
+        captain: false,
+        team: 'white',
+      }
+      players.value[player] = playerData
       // FIXME: race here if top ack client quit after ansering,
       // but that's ok for now
       // ask game state from a first presented player
-      for (let i in members) {
-        const player = members[i].clientId
-        const playerData = {
-          name: player,
-          short: player[0],
-          color: palette[crc32(player) % palette.length],
-          captain: false,
-          team: 'white',
+      if (i == 0) {
+        const payload = {
+          from: username,
+          to: player,
         }
-        players.value[player] = playerData
-        if (i == 0) {
-          const payload = {
-            from: username.value,
-            to: player,
-          }
-          console.debug(`publish reqState ${JSON.stringify(payload)}`)
-          channel.publish('reqState', payload)
-        }
+        console.debug(`publish reqState ${JSON.stringify(payload)}`)
+        channel.publish('reqState', payload)
       }
     }
   }
@@ -105,8 +96,8 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const onReqState = ({data}) => {
-    console.debug(`received reqState ${JSON.stringify(data)} as ${username.value}`)
-    if (data.to != username.value) {
+    console.debug(`received reqState ${JSON.stringify(data)} as ${username}`)
+    if (data.to != username) {
       return
     }
     const payload = {
@@ -119,8 +110,8 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const onAckState = ({data}) => {
-    console.debug(`received ackState ${JSON.stringify(data)} as ${username.value}`)
-    if (data.to != username.value || data.gameKey == gameKey.value) {
+    console.debug(`received ackState ${JSON.stringify(data)} as ${username}`)
+    if (data.to != username || data.gameKey == gameKey.value) {
       return
     }
     gameKey.value = data.gameKey
@@ -135,11 +126,11 @@ export const useGameStore = defineStore('game', () => {
       })
     }
     console.debug(`subscribed: ok (${gameKey.value})`)
-    channel.presence.enterClient(username.value)
+    channel.presence.enterClient(username)
   }
 
   const onOpen = ({data}) => {
-    console.debug(`received open ${JSON.stringify(data)} as ${username.value}`)
+    console.debug(`received open ${JSON.stringify(data)} as ${username}`)
     const idx = data.idx
     if (board.value[idx] && board.value[idx].closed()) {
       board.value[idx].state -= 1
@@ -147,36 +138,50 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const onNextGame = ({data}) => {
-    console.debug(`received nextGame ${JSON.stringify(data)} as ${username.value}`)
+    console.debug(`received nextGame ${JSON.stringify(data)} as ${username}`)
     gameKey.value = data.gameKey
     rnd = prng_alea(gameKey.value)
     buildGame()
   }
 
-  broker.connection.on(connectionLogger)
-  broker.connection.on('connected', () => channel.presence.get(syncState))
-
   const connect = () => {
     console.debug('connect')
-    username.value = localStorage.getItem("username")
+    username = localStorage.getItem("username")
+    room = localStorage.getItem("room")
+
+    channel = broker.channels.get(`room-${room}`)
+
+    // debug logger
+    broker.connection.on((stateChange) => {
+      console.debug(`connection state ${JSON.stringify(stateChange)}`)
+    })
+
+    broker.connection.on('connected', () => {
+      channel.presence.subscribe('enter', onPlayerEnter)
+      channel.presence.subscribe('leave', onPlayerLeave)
+
+      channel.subscribe('reqState', onReqState)
+      channel.subscribe('ackState', onAckState)
+
+      channel.subscribe('open', onOpen)
+      channel.subscribe('nextGame', onNextGame)
+
+      channel.presence.get(syncState)
+    })
+
     broker.connect()
   }
 
   const disconnect = () => {
     console.debug('disconnect')
-    channel.presence.leaveClient(username.value)
-    broker.close()
+    channel.presence.leaveClient(username, () => {
+      channel.presence.unsubscribe()
+      channel.unsubscribe()
+      channel.detach()
+      broker.connection.off()
+      broker.close()
+    })
   }
-
-  channel.presence.subscribe('enter', onPlayerEnter)
-  channel.presence.subscribe('leave', onPlayerLeave)
-
-  channel.subscribe('reqState', onReqState)
-  channel.subscribe('ackState', onAckState)
-
-  channel.subscribe('open', onOpen)
-  channel.subscribe('nextGame', onNextGame)
-
 
   const open = (idx) => {
     if (board.value[idx] && board.value[idx].closed()) {
@@ -251,8 +256,6 @@ export const useGameStore = defineStore('game', () => {
 
   const $reset = () => {
     gameKey.value = ''
-    username.value = ''
-    // room.value = ''
     players.value = {}
     captainView.value = false
     board.value = Array(boardSize).fill().map(() => {
@@ -266,8 +269,6 @@ export const useGameStore = defineStore('game', () => {
 
   return {
     gameKey,
-    username,
-    room,
     players,
     captainView,
     board,
