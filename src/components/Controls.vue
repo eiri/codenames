@@ -50,7 +50,7 @@ const score = computed(() => {
 })
 
 const store = useGameStore()
-const { captainView, board } = storeToRefs(store)
+const { isCaptain, board } = storeToRefs(store)
 const { nextGame } = store
 </script>
 
@@ -78,8 +78,8 @@ const { nextGame } = store
     </div>
     <div class="nu">
       <img class="crown" src="../assets/crown.svg" />
-      <label :class="captainView ? 'switch-on' : 'switch-off'" for="captain">
-        <input type="checkbox" id="captain" v-model="captainView" />
+      <label :class="isCaptain ? 'switch-on' : 'switch-off'" for="captain">
+        <input type="checkbox" id="captain" v-model="isCaptain" />
         <div class="circle"></div>
       </label>
     </div>

@@ -23,7 +23,7 @@ export const useGameStore = defineStore('game', () => {
   }))
 
   const players = ref({})
-  const captainView = ref(false)
+  const isCaptain = ref(false)
 
   const gameKey = ref(self.crypto.randomUUID())
   let rnd = prng_alea(gameKey.value)
@@ -251,13 +251,13 @@ export const useGameStore = defineStore('game', () => {
       })
     }
 
-    captainView.value = false
+    isCaptain.value = false
   }
 
   const $reset = () => {
     gameKey.value = ''
     players.value = {}
-    captainView.value = false
+    isCaptain.value = false
     board.value = Array(boardSize).fill().map(() => {
       return {
         word: '',
@@ -269,8 +269,8 @@ export const useGameStore = defineStore('game', () => {
 
   return {
     gameKey,
+    isCaptain,
     players,
-    captainView,
     board,
     open,
     connect,

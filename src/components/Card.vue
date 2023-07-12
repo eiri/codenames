@@ -16,11 +16,11 @@ const props = defineProps({
 const { card } = toRefs(props);
 
 const store = useGameStore()
-const { captainView } = storeToRefs(store)
+const { isCaptain } = storeToRefs(store)
 const { open } = store
 
 const cardClass = computed(() => {
-  if (!captainView.value && card.value.closed()) {
+  if (!isCaptain.value && card.value.closed()) {
     return 'card-3'
   }
   return `card-${card.value.state} ${card.value.closed() ? '' : 'open'}`
