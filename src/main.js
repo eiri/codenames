@@ -12,7 +12,7 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {path: '/', component: Home},
-    {path: '/game/:room', component: Game},
+    {path: '/room/:room', component: Game},
   ]
 })
 

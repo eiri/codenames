@@ -19,7 +19,7 @@ const login = (e) => {
   localStorage.setItem("room", room.value)
   localStorage.setItem("username", username.value)
   localStorage.setItem("password", password.value)
-  router.push(`/game/${room.value}`)
+  router.push(`/room/${room.value}`)
 }
 
 onMounted(() => {
