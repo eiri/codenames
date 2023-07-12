@@ -18,7 +18,7 @@ A multiplayer online board game.
 ### Fonts
 
 - Playfair
-- Source Sans Pro
+- Source Sans Pro (Source Sans 3 actually)
 
 Source: https://inkbotdesign.com/font-combinations/
 
@@ -51,6 +51,7 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
   so there will be no need to use lambdas to secure api key
 - try to make captainKey into player property, marshal it on presense member data, show it to others and restrict it to two, one on each team
 - better story on auth, it really should use tokens...
+- better story for global error handeling
 
 ## Alternative message bus
 
