@@ -1,4 +1,6 @@
 <script setup>
+import { SHA256 } from 'crypto-es/lib/sha256'
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -22,11 +24,18 @@ const login = (e) => {
     error.value = `Missing password`
     return false
   }
+
+  if (SHA256(password.value).toString() != import.meta.env.VITE_KEY_CHECKSUM) {
+    error.value = `Invalid password`
+    return false
+  }
+
   error.value = ''
   // store values for connect
   localStorage.setItem("room", room.value)
   localStorage.setItem("username", username.value)
   localStorage.setItem("password", password.value)
+
   router.push(`/room/${room.value}`)
 }
 

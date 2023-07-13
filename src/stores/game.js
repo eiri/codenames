@@ -1,10 +1,13 @@
+import { AES } from 'crypto-es/lib/aes'
+import { Utf8 } from 'crypto-es/lib/core'
 import Ably from 'ably'
-
 import { prng_alea } from 'esm-seedrandom';
+
 import { ref, computed, inject } from 'vue'
 import { defineStore } from 'pinia'
 
-import { words } from '../assets/words'
+import words from '../assets/words.json'
+// import json from './json/data.json'
 import { CardState } from '../assets/states'
 
 export const useGameStore = defineStore('game', () => {
@@ -29,7 +32,10 @@ export const useGameStore = defineStore('game', () => {
   const gameKey = ref('')
   let rnd = prng_alea(uuidv4())
 
-  const ablyAPIKey = import.meta.env.VITE_ABLY_API_KEY
+  const password = localStorage.getItem("password")
+  const decrypted = AES.decrypt(import.meta.env.VITE_KEY_CIPHERTEXT, password)
+  const ablyAPIKey = decrypted.toString(Utf8)
+  console.assert(ablyAPIKey != "")
 
   let broker = new Ably.Realtime({
     key: ablyAPIKey,
