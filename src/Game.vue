@@ -2,10 +2,10 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { useGameStore } from './stores/game.js'
-import Info from './components/Info.vue'
-import Controls from './components/Controls.vue'
-import Screen from './components/Screen.vue'
+import { useGameStore } from '@/stores/game.js'
+import Info from '@/components/Info.vue'
+import Controls from '@/components/Controls.vue'
+import Screen from '@/components/Screen.vue'
 
 
 const router = useRouter()

@@ -2,8 +2,8 @@
 import { computed, toRefs  } from 'vue'
 import { storeToRefs  } from 'pinia'
 
-import { CardState } from '../assets/states.js'
-import { useGameStore } from '../stores/game.js'
+import { CardState } from '@/assets/states.js'
+import { useGameStore } from '@/stores/game.js'
 
 
 const props = defineProps({

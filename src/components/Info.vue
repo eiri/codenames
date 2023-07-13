@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
-import { useGameStore } from '../stores/game.js'
+import { useGameStore } from '@/stores/game.js'
 
 const room = ref(localStorage.getItem("room"))
 const store = useGameStore()

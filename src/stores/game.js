@@ -6,9 +6,8 @@ import { prng_alea } from 'esm-seedrandom';
 import { ref, computed, inject } from 'vue'
 import { defineStore } from 'pinia'
 
-import words from '../assets/words.json'
-// import json from './json/data.json'
-import { CardState } from '../assets/states'
+import words from '@/assets/words.json'
+import { CardState } from '@/assets/states'
 
 export const useGameStore = defineStore('game', () => {
   const boardSize = 25

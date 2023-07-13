@@ -2,8 +2,8 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
-import { useGameStore } from '../stores/game.js'
-import Card from './Card.vue'
+import { useGameStore } from '@/stores/game.js'
+import Card from '@/components/Card.vue'
 
 
 const cols = ref(5)

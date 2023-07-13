@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
-import { useGameStore } from '../stores/game.js'
-import { CardState } from '../assets/states.js'
+import { useGameStore } from '@/stores/game.js'
+import { CardState } from '@/assets/states.js'
 
 
 const score = computed(() => {
