@@ -93,8 +93,8 @@ onMounted(() => {
   top: 0;
   z-index: 10;
   /* https://unsplash.com/collections/9568420/letter-love */
-  /*background-image: url('https://source.unsplash.com/collection/9568420/');*/
-  background-image: url('assets/bg.jpg');
+  background-image: url('https://source.unsplash.com/collection/9568420/');
+  /*background-image: url('assets/bg.jpg');*/
   background-color: rgba(0, 0, 0, 1);
   background-size: cover;
   background-position: center;
