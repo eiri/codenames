@@ -47,7 +47,6 @@ Use stable random with shared seed for board generation. Use Ably broadcast to s
 
 ### ToDo
 
-- animation on card flip is blinking on iOS Safari
 - try to make captainKey into player property, marshal it on presense member data, show it to others and restrict it to two, one on each team
 - better story on auth, it really should use tokens...
 - better story for global error handeling

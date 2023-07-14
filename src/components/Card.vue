@@ -47,6 +47,8 @@ article {
   border-radius: 4px;
   box-shadow: var(--box-shadow-low);
   transition: var(--animate-transition);
+  -webkit-transition: -webkit-transform var(--animate-transition);
+  -webkit-backface-visibility: hidden;
   display: flex;
   align-items: center;
   justify-content: center;

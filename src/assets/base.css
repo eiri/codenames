@@ -48,6 +48,6 @@
   --box-shadow-low: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 
   --animate-duration: 800ms;
-  --animate-delay: 0.9s;
-  --animate-transition: 0.3s;
+  --animate-delay: 900ms;
+  --animate-transition: 300ms;
 }
