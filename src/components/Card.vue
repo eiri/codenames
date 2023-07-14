@@ -40,8 +40,9 @@ const cardClass = computed(() => {
 <style scoped>
 article {
   cursor: pointer;
-  font-size: 2rem;
-  height: 4.5rem;
+  display: inline;
+  font-size: 2vw;
+  height: 7vh;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   box-shadow: var(--box-shadow-low);

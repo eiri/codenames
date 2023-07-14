@@ -20,7 +20,7 @@ const { board } = storeToRefs(store)
 <style scoped>
 div {
   display: grid;
-  grid-template-columns: repeat(v-bind('cols'), minmax(250px, 1fr));
+  grid-template-columns: repeat(v-bind('cols'), 1fr);
   gap: 1rem;
 }
 
