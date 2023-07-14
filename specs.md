@@ -22,6 +22,10 @@ A multiplayer online board game.
 
 Source: https://inkbotdesign.com/font-combinations/
 
+### Icons
+
+Google Material Icons from https://icon-sets.iconify.design/ic/round-meeting-room/
+
 ### Colors
 
 - Baby Blue: #cee6f2
