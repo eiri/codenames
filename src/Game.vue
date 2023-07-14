@@ -13,6 +13,12 @@ const store = useGameStore()
 const { connect, disconnect } = store
 
 onMounted(() => {
+  // this page was reloaded
+  if (localStorage.getItem("loggedIn")) {
+    console.log('this page was reloaded')
+    router.push(`/`)
+  }
+
   const username = localStorage.getItem("username")
   const room = localStorage.getItem("room")
 
@@ -23,12 +29,14 @@ onMounted(() => {
   }
 
   console.debug(`Game: onMounted ${username} ${room}`)
+  localStorage.setItem("loggedIn", true)
   connect()
 })
 
 onUnmounted(() => {
   console.debug('Game: onUnmounted')
   disconnect()
+  localStorage.removeItem("loggedIn");
   store.$reset()
 })
 </script>

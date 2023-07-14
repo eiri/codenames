@@ -60,6 +60,9 @@ export const useGameStore = defineStore('game', () => {
       channel.presence.enterClient(username)
       return
     }
+    // if there was a browser refresh don't ask yourself about state
+    delete players[username]
+    // add all to list and ask top player for game state
     for (let i in members) {
       const player = members[i].clientId
       const playerData = {
@@ -70,7 +73,7 @@ export const useGameStore = defineStore('game', () => {
         team: 'white',
       }
       players.value[player] = playerData
-      // FIXME: race here if top ack client quit after ansering,
+      // FIXME: race here if top ack client quit after reqState
       // but that's ok for now
       // ask game state from a first presented player
       if (i == 0) {
@@ -85,6 +88,9 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const onPlayerEnter = (member) => {
+    if (member.clientId in players) {
+      return
+    }
     console.debug(`presence enter member ${JSON.stringify(member)}`)
     const player = member.clientId
     const playerData = {
@@ -98,6 +104,10 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const onPlayerLeave = (member) => {
+    // browser refresh
+    if (member.clientId == username) {
+      return
+    }
     console.debug(`presence leave member ${JSON.stringify(member)}`)
     delete players.value[member.clientId]
   }
