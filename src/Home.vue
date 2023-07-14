@@ -99,6 +99,10 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  display: flex;
+  align-items: top;
+  justify-content: center;
 }
 
 .error {
@@ -110,18 +114,15 @@ h1 {
 }
 
 form {
-  width: 20vw;
-  height: 60vh;
+  width: 380px;
   position: absolute;
-  transform: translate(-50%,-50%);
-  top: 50%;
-  left: 50%;
+  top: 2vh;
+  padding: 1rem;
   border-radius: 10px;
   background-color: rgba(111, 161, 187, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--box-shadow-high);
-  padding: 2rem 1rem;
 }
 
 form * {
@@ -139,12 +140,13 @@ label {
 }
 
 input {
-  width: 19vw;
+  width: 100%;
   height: 3rem;
-  display: block;
+  padding: 0 0.5rem;
   background-color: rgba(111, 161, 187, 0.7);
   border-radius: 4px;
-  padding: 0 0.5rem;
+  box-sizing: border-box;
+  resize: vertical;
 }
 
 ::placeholder {
@@ -153,9 +155,10 @@ input {
 }
 
 button {
-  width: 20vw;
+  width: 100%;
   height: 3rem;
-  margin-top: 6rem;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
   color: var(--color-text-dark);
   background-color: var(--color-background);
   border-radius: 4px;
