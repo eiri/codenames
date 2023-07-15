@@ -9,6 +9,7 @@ try {
     const fileOut = args[1]
     const data = fs.readFileSync(fileIn, 'utf8')
     let words = data.split(/[ ,]+/).map(w => w.toLowerCase())
+    words = words.filter((v, i, a) => a.indexOf(v) === i)
     words.sort()
     fs.writeFileSync(fileOut, JSON.stringify(words, null, 2))
 } catch (err) {
