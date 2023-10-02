@@ -91,7 +91,7 @@ article:hover, .open {
 
 /* red-closed */
 .card-5 {
-  color: var(--color-text-light);
+  color: var(--color-text-dark);
   background-color: var(--color-red-light);
 }
 
