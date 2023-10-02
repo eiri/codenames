@@ -28,14 +28,12 @@ Google Material Icons from https://icon-sets.iconify.design/ic/round-meeting-roo
 
 ### Colors
 
-- Baby Blue: #cee6f2
-- Beryl Blue: #6fa1bb
-- Lilac: #f6ede3
-- Peach: #e3867d
-- Strawberry: #d2385a;
-- Dark Sage: #507b6a;
+https://www.hsluv.org/
 
-Source: https://looka.com/blog/color-combinations/
+- Red: hue 4
+- Green: hue 157
+- Blue: hue 228
+- White: hue 56
 
 ## Sync algo
 
