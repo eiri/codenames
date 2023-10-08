@@ -242,8 +242,9 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const randomWords = size => {
-    // FIXME: refactor to uniqueRandomWords(size) as this can have duplicates
-    return Array(size).fill().map(randomWord)
+    let words = {}
+    do { words[randomWord()] = true } while (Object.keys(words).length < size)
+    return Object.keys(words)
   }
 
   const nextWord = () => {
