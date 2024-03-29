@@ -18,6 +18,7 @@ export const useGameStore = defineStore('game', () => {
   // from https://stackoverflow.com/a/2117523
   const uuidv4=function(){return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, function(c){return(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)})};
 
+  let seen = []
   const board = ref(Array(boardSize).fill().map(() => {
     return {
       word: '',
@@ -120,6 +121,7 @@ export const useGameStore = defineStore('game', () => {
     const payload = {
       gameKey: gameKey.value,
       state: board.value.map(c => ({state: c.state, word: c.word})),
+      seen: seen,
       to: data.from,
     }
     console.debug(`publish ackState ${JSON.stringify(payload)}`)
@@ -132,6 +134,7 @@ export const useGameStore = defineStore('game', () => {
       return
     }
     gameKey.value = data.gameKey
+    seen = data.seen
     board.value = []
     for (let i in data.state) {
       const card = data.state[i]
@@ -237,27 +240,28 @@ export const useGameStore = defineStore('game', () => {
   }
 
   const randomWord = () => {
-    const randomIndex = Math.floor(rnd() * words.length);
-    return words[randomIndex];
-  }
-
-  const randomWords = size => {
-    let words = {}
-    do { words[randomWord()] = true } while (Object.keys(words).length < size)
-    return Object.keys(words)
-  }
-
-  const nextWord = () => {
-    let word = gameKey.value
-    do { word = randomWord() } while (word == gameKey.value)
+    if (seen.length == words.length) {
+      console.warn('words list exhausted, resetting repeats collector')
+      seen = []
+    } 
+    let word = ''
+    while (true) {
+      let randomIndex = Math.floor(rnd() * words.length)
+      if (!seen.includes(randomIndex)) {
+        seen.push(randomIndex)
+        word = words[randomIndex]
+        break
+      }
+    }
     return word
   }
 
-  // FIXME: it is possible to get same board in a single session
-  // so better is to keep fixed sized table of unique words
-  // to make sure there are at least N unique boards
+  const randomWords = size => {
+    return Array(size).fill().map(randomWord)
+  }
+
   const nextGame = () => {
-    gameKey.value = nextWord()
+    gameKey.value = randomWord()
     const payload = {gameKey: gameKey.value}
     console.debug(`publish nextGame ${JSON.stringify(payload)}`)
     channel.publish('nextGame', payload)
