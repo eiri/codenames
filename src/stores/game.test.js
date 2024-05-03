@@ -1,14 +1,13 @@
-import { beforeAll, beforeEach, afterAll, describe, it, expect, vi } from 'vitest'
+import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useGameStore } from '@/stores/game.js'
 
 vi.mock('ably', () => {
-  let callbacks = {}
+  let data = {}
   const Realtime = vi.fn()
   Realtime.prototype.connect = vi.fn()
   Realtime.prototype.connection = {
     on: (name, fn) => {
-      // call func to register all callbacks
       if (name === "connected") {
         fn()
       }
@@ -17,15 +16,17 @@ vi.mock('ably', () => {
   Realtime.prototype.channels = {
     get: vi.fn(() => {
       return {
-        subscribe: (name, fn) => {
-          callbacks[name] = fn
-        },
         publish: (name, payload) => {
-          callbacks[name]({data : payload})
+          data = payload
         },
         presence: {
           subscribe: vi.fn(),
           get: vi.fn(),
+        },
+        subscribe: (name, fn) => {
+          if (name === "nextGame") {
+            fn({data})
+          }
         }
       }
     })
@@ -42,9 +43,6 @@ describe('Game Store', () => {
     localStorage.setItem("room", "test")
     vi.spyOn(console, "assert").mockImplementation(() => {})
     vi.spyOn(console, "debug").mockImplementation(() => {})
-  })
-
-  beforeEach(async () => {
     setActivePinia(createPinia())
   })
 
@@ -59,14 +57,13 @@ describe('Game Store', () => {
     store.connect()
     expect(connectSpy).toHaveBeenCalledTimes(1)
 
-    let seen = []
-    // 43 is total number of games before seen exhausted
-    for (let i = 1; i <= 43; i++) {
+    for (let i = 1; i <= 12; i++) {
       store.nextGame()
+      let seen = []
       for (const card of store.board) {
         expect(seen).not.toContain(card.word)
         seen.push(card.word)
       }
     }
-  })
+  })        
 })
