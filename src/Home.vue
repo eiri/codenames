@@ -92,9 +92,7 @@ onMounted(() => {
   left: 0;
   top: 0;
   z-index: 10;
-  /* https://unsplash.com/collections/239831/typography */
-  background-image: url('https://source.unsplash.com/collection/239831/?auto=format');
-  /*background-image: url('assets/bg.jpg');*/
+  background-image: url('assets/bg.jpg');
   background-color: rgba(0, 0, 0, 1);
   background-size: cover;
   background-position: center;
