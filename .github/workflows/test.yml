@@ -29,4 +29,7 @@ jobs:
           VITE_KEY_CIPHERTEXT: ${{ secrets.VITE_KEY_CIPHERTEXT }}
         run: npm run build
       - name: Run tests
+        env:
+          VITE_KEY_CHECKSUM: ${{ secrets.VITE_KEY_CHECKSUM }}
+          VITE_KEY_CIPHERTEXT: ${{ secrets.VITE_KEY_CIPHERTEXT }}
         run: npm run test
