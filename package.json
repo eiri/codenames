@@ -14,7 +14,7 @@
     "encrypt": "node ./assets/encrypt.mjs"
   },
   "dependencies": {
-    "ably": "^1.2.40",
+    "ably": "^2.5.0",
     "crypto-es": "^2.0.2",
     "esm-seedrandom": "^3.0.5",
     "pinia": "^2.0.36",
