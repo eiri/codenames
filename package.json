@@ -17,7 +17,7 @@
     "ably": "^1.2.40",
     "crypto-es": "^2.0.2",
     "esm-seedrandom": "^3.0.5",
-    "pinia": "^2.0.36",
+    "pinia": "^2.2.6",
     "vue": "^3.4.32",
     "vue-router": "^4.4.0"
   },
