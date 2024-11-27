@@ -1,7 +1,3 @@
-import { AES } from "crypto-es/lib/aes";
-import { Utf8 } from "crypto-es/lib/core";
-import Ably from "ably";
-
 import { ref, inject } from "vue";
 import { defineStore } from "pinia";
 
@@ -34,6 +30,7 @@ export const useGameStore = defineStore("game", () => {
   };
 
   const rnd = inject("rnd");
+  const broker = inject("broker");
 
   const board = ref(
     Array(boardSize)
@@ -53,20 +50,9 @@ export const useGameStore = defineStore("game", () => {
   const isCaptain = ref(false);
   const gameKey = ref("");
 
+  const username = localStorage.getItem("username");
   const password = localStorage.getItem("password");
-  const decrypted = AES.decrypt(import.meta.env.VITE_KEY_CIPHERTEXT, password);
-  const ablyAPIKey = decrypted.toString(Utf8);
-  console.assert(ablyAPIKey != "");
-
-  let broker = new Ably.Realtime({
-    key: ablyAPIKey,
-    autoConnect: false,
-    transportParams: { heartbeatInterval: 300000 },
-  });
-
-  let username = null;
-  let room = null;
-  let channel = null;
+  const room = localStorage.getItem("room");
 
   // callbacks
   const syncState = (err, members) => {
@@ -79,7 +65,7 @@ export const useGameStore = defineStore("game", () => {
       // assume this player is the first one
       console.debug(`subscribed: ok (${gameKey.value})`);
       nextGame();
-      channel.presence.enterClient(username);
+      broker.channel.presence.enterClient(username);
       return;
     }
     // if there was a browser refresh don't ask yourself about state
@@ -104,7 +90,7 @@ export const useGameStore = defineStore("game", () => {
           to: player,
         };
         console.debug(`publish reqState ${JSON.stringify(payload)}`);
-        channel.publish("reqState", payload);
+        broker.channel.publish("reqState", payload);
       }
     }
   };
@@ -145,7 +131,7 @@ export const useGameStore = defineStore("game", () => {
       to: data.from,
     };
     console.debug(`publish ackState ${JSON.stringify(payload)}`);
-    channel.publish("ackState", payload);
+    broker.channel.publish("ackState", payload);
   };
 
   const onAckState = ({ data }) => {
@@ -170,7 +156,7 @@ export const useGameStore = defineStore("game", () => {
       });
     }
     console.debug(`subscribed: ok (${gameKey.value})`);
-    channel.presence.enterClient(username);
+    broker.channel.presence.enterClient(username);
   };
 
   const onOpen = ({ data }) => {
@@ -188,51 +174,34 @@ export const useGameStore = defineStore("game", () => {
   };
 
   const connect = () => {
-    console.debug("connect");
-    username = localStorage.getItem("username");
-    room = localStorage.getItem("room");
-
     if (username == null || room == null) {
       console.error(`missing username or room ${username} ${room}`);
       return;
     }
 
-    channel = broker.channels.get(`room-${room}`);
+    const cb = () => {
+      broker.channel.presence.subscribe("enter", onPlayerEnter);
+      broker.channel.presence.subscribe("leave", onPlayerLeave);
 
-    // debug logger
-    broker.connection.on((stateChange) => {
-      console.debug(`connection state ${JSON.stringify(stateChange)}`);
-    });
+      broker.channel.subscribe("reqState", onReqState);
+      broker.channel.subscribe("ackState", onAckState);
 
-    broker.connection.on("connected", () => {
-      channel.presence.subscribe("enter", onPlayerEnter);
-      channel.presence.subscribe("leave", onPlayerLeave);
+      broker.channel.subscribe("open", onOpen);
+      broker.channel.subscribe("nextGame", onNextGame);
 
-      channel.subscribe("reqState", onReqState);
-      channel.subscribe("ackState", onAckState);
+      broker.channel.presence.get(syncState);
+    };
 
-      channel.subscribe("open", onOpen);
-      channel.subscribe("nextGame", onNextGame);
-
-      channel.presence.get(syncState);
-    });
-
-    broker.connect();
+    broker.connect(username, password, room, cb);
   };
 
   const disconnect = () => {
-    console.debug("disconnect");
-    if (channel == null) {
+    if (broker.channel == null) {
       console.error("channel is null");
       return;
     }
-    channel.presence.leaveClient(username, () => {
-      channel.presence.unsubscribe();
-      channel.unsubscribe();
-      channel.detach();
-      broker.connection.off();
-      broker.close();
-      channel = null;
+    broker.channel.presence.leaveClient(username, () => {
+      broker.disconnect();
     });
   };
 
@@ -240,7 +209,7 @@ export const useGameStore = defineStore("game", () => {
     if (board.value[idx] && board.value[idx].closed()) {
       const payload = { idx };
       console.debug(`publish open ${JSON.stringify(payload)}`);
-      channel.publish("open", payload);
+      broker.channel.publish("open", payload);
     }
   };
 
@@ -290,7 +259,7 @@ export const useGameStore = defineStore("game", () => {
     gameKey.value = nextWord();
     const payload = { gameKey: gameKey.value };
     console.debug(`publish nextGame ${JSON.stringify(payload)}`);
-    channel.publish("nextGame", payload);
+    broker.channel.publish("nextGame", payload);
   };
 
   const buildGame = () => {
