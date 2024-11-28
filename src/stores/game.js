@@ -6,28 +6,6 @@ import { CardState } from "@/assets/states";
 
 export const useGameStore = defineStore("game", () => {
   const boardSize = 25;
-  // https://colorkit.co/palette/ffadad-ffd6a5-fdffb6-caffbf-9bf6ff-a0c4ff-bdb2ff-ffc6ff/
-  const palette = [
-    "#ffadad",
-    "#ffd6a5",
-    "#fdffb6",
-    "#caffbf",
-    "#9bf6ff",
-    "#a0c4ff",
-    "#bdb2ff",
-    "#ffc6ff",
-  ];
-  // from https://stackoverflow.com/a/50579690
-  const crc32 = function (r) {
-    for (var a, o = [], c = 0; c < 256; c++) {
-      a = c;
-      for (var f = 0; f < 8; f++) a = 1 & a ? 3988292384 ^ (a >>> 1) : a >>> 1;
-      o[c] = a;
-    }
-    for (var n = -1, t = 0; t < r.length; t++)
-      n = (n >>> 8) ^ o[255 & (n ^ r.charCodeAt(t))];
-    return (-1 ^ n) >>> 0;
-  };
 
   const rnd = inject("rnd");
   const broker = inject("broker");
@@ -46,7 +24,6 @@ export const useGameStore = defineStore("game", () => {
       }),
   );
 
-  const players = ref({});
   const isCaptain = ref(false);
   const gameKey = ref("");
 
@@ -55,79 +32,13 @@ export const useGameStore = defineStore("game", () => {
   const room = localStorage.getItem("room");
 
   // callbacks
-  const syncState = (err, members) => {
-    if (err != null) {
-      console.error(err);
-      return;
-    }
-    console.debug(`members: ${members.length}`);
-    if (members.length == 0) {
-      // assume this player is the first one
-      console.debug(`subscribed: ok (${gameKey.value})`);
-      nextGame();
-      broker.channel.presence.enterClient(username);
-      return;
-    }
-    // if there was a browser refresh don't ask yourself about state
-    delete players[username];
-    // add all to list and ask top player for game state
-    for (let i in members) {
-      const player = members[i].clientId;
-      const playerData = {
-        name: player,
-        short: player[0],
-        color: palette[crc32(player) % palette.length],
-        captain: false,
-        team: "white",
-      };
-      players.value[player] = playerData;
-      // FIXME: race here if top ack client quit after reqState
-      // but that's ok for now
-      // ask game state from a first presented player
-      if (i == 0) {
-        const payload = {
-          from: username,
-          to: player,
-        };
-        console.debug(`publish reqState ${JSON.stringify(payload)}`);
-        broker.channel.publish("reqState", payload);
-      }
-    }
-  };
-
-  const onPlayerEnter = (member) => {
-    if (member.clientId in players) {
-      return;
-    }
-    console.debug(`presence enter member ${JSON.stringify(member)}`);
-    const player = member.clientId;
-    const playerData = {
-      name: player,
-      short: player[0],
-      color: palette[crc32(player) % palette.length],
-      captain: false,
-      team: "white",
-    };
-    players.value[player] = playerData;
-  };
-
-  const onPlayerLeave = (member) => {
-    // browser refresh
-    if (member.clientId == username) {
-      return;
-    }
-    console.debug(`presence leave member ${JSON.stringify(member)}`);
-    delete players.value[member.clientId];
-  };
-
   const onReqState = ({ data }) => {
     console.debug(`received reqState ${JSON.stringify(data)} as ${username}`);
     if (data.to != username) {
       return;
     }
     const payload = {
-      gameKey: gameKey.value,
-      state: board.value.map((c) => ({ state: c.state, word: c.word })),
+      state: getState(),
       to: data.from,
     };
     console.debug(`publish ackState ${JSON.stringify(payload)}`);
@@ -136,16 +47,17 @@ export const useGameStore = defineStore("game", () => {
 
   const onAckState = ({ data }) => {
     console.debug(`received ackState ${JSON.stringify(data)} as ${username}`);
-    if (data.to != username || data.gameKey == gameKey.value) {
-      console.debug(
-        `invalid ackState ${data.to} and ${data.gameKey} vs ${gameKey.value}`,
-      );
+    const {
+      to,
+      state: { key, state },
+    } = data;
+    if (to != username || key == gameKey.value) {
       return;
     }
-    gameKey.value = data.gameKey;
+    gameKey.value = key;
     board.value = [];
-    for (let i in data.state) {
-      const card = data.state[i];
+    for (let i in state) {
+      const card = state[i];
       board.value.push({
         idx: i,
         state: card.state,
@@ -156,7 +68,6 @@ export const useGameStore = defineStore("game", () => {
       });
     }
     console.debug(`subscribed: ok (${gameKey.value})`);
-    broker.channel.presence.enterClient(username);
   };
 
   const onOpen = ({ data }) => {
@@ -173,36 +84,44 @@ export const useGameStore = defineStore("game", () => {
     buildGame();
   };
 
-  const connect = () => {
+  const connect = async () => {
     if (username == null || room == null) {
       console.error(`missing username or room ${username} ${room}`);
       return;
     }
+    // connect ot broker, enter presence
+    await broker.connect(username, password, room);
+    // set channel callbacks
+    broker.channel.subscribe("reqState", onReqState);
+    broker.channel.subscribe("ackState", onAckState);
 
-    const cb = () => {
-      broker.channel.presence.subscribe("enter", onPlayerEnter);
-      broker.channel.presence.subscribe("leave", onPlayerLeave);
-
-      broker.channel.subscribe("reqState", onReqState);
-      broker.channel.subscribe("ackState", onAckState);
-
-      broker.channel.subscribe("open", onOpen);
-      broker.channel.subscribe("nextGame", onNextGame);
-
-      broker.channel.presence.get(syncState);
-    };
-
-    broker.connect(username, password, room, cb);
-  };
-
-  const disconnect = () => {
-    if (broker.channel == null) {
-      console.error("channel is null");
+    broker.channel.subscribe("open", onOpen);
+    broker.channel.subscribe("nextGame", onNextGame);
+    // sync state
+    console.debug(`syncLeader: ${broker.syncLeader}`);
+    if (broker.syncLeader == null) {
+      // assume this player is the first one
+      console.debug(`subscribed: ok (${gameKey.value})`);
+      nextGame();
       return;
     }
-    broker.channel.presence.leaveClient(username, () => {
-      broker.disconnect();
-    });
+    const payload = {
+      from: username,
+      to: broker.syncLeader,
+    };
+    console.debug(`publish reqState ${JSON.stringify(payload)}`);
+    broker.channel.publish("reqState", payload);
+  };
+
+  const disconnect = async () => {
+    await broker.disconnect(username);
+  };
+
+  const getState = () => {
+    return {
+      key: gameKey.value,
+      state: board.value.map((c) => ({ state: c.state, word: c.word })),
+    };
   };
 
   const open = (idx) => {
@@ -286,7 +205,6 @@ export const useGameStore = defineStore("game", () => {
 
   const $reset = () => {
     gameKey.value = "";
-    players.value = {};
     isCaptain.value = false;
     board.value = Array(boardSize)
       .fill()
@@ -304,8 +222,8 @@ export const useGameStore = defineStore("game", () => {
   return {
     gameKey,
     isCaptain,
-    players,
     board,
+    getState,
     open,
     connect,
     disconnect,
