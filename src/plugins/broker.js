@@ -2,6 +2,7 @@ import { AES } from "crypto-es/lib/aes";
 import { Utf8 } from "crypto-es/lib/core";
 import Ably from "ably";
 
+// import { useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
 
 class Broker {
@@ -10,6 +11,7 @@ class Broker {
   constructor() {
     console.debug(`broker: init`);
     this.playersStore = usePlayersStore();
+    // this.gameStore = useGameStore();
     this.channel = null;
   }
 
@@ -49,6 +51,12 @@ class Broker {
         }
       }
     });
+
+    if (this.#syncLeader == null) {
+      this.#syncLeader = username;
+    }
+
+    // sync state
 
     await this.channel.presence.enterClient(username);
   }

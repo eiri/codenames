@@ -55,18 +55,8 @@ export const useGameStore = defineStore("game", () => {
       return;
     }
     gameKey.value = key;
-    board.value = [];
-    for (let i in state) {
-      const card = state[i];
-      board.value.push({
-        idx: i,
-        state: card.state,
-        word: card.word,
-        closed() {
-          return this.state % 2 == 1;
-        },
-      });
-    }
+    buildGame();
+    board.value.forEach((card, i) => (card.state = state[i]));
     console.debug(`subscribed: ok (${gameKey.value})`);
   };
 
@@ -99,12 +89,6 @@ export const useGameStore = defineStore("game", () => {
     broker.channel.subscribe("nextGame", onNextGame);
     // sync state
     console.debug(`syncLeader: ${broker.syncLeader}`);
-    if (broker.syncLeader == null) {
-      // assume this player is the first one
-      console.debug(`subscribed: ok (${gameKey.value})`);
-      nextGame();
-      return;
-    }
     const payload = {
       from: username,
       to: broker.syncLeader,
@@ -118,9 +102,13 @@ export const useGameStore = defineStore("game", () => {
   };
 
   const getState = () => {
+    if (gameKey.value == "") {
+      gameKey.value = nextWord();
+      buildGame();
+    }
     return {
       key: gameKey.value,
-      state: board.value.map((c) => ({ state: c.state, word: c.word })),
+      state: board.value.map((c) => c.state),
     };
   };
 

@@ -1,4 +1,4 @@
-import { ref, inject } from "vue";
+import { ref } from "vue";
 import { defineStore } from "pinia";
 
 export const usePlayersStore = defineStore("players", () => {
