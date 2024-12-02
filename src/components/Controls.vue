@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import { storeToRefs } from "pinia";
 
 import { useGameStore } from "@/stores/game.js";
@@ -48,9 +48,8 @@ const score = computed(() => {
     return score;
 });
 
-const store = useGameStore();
-const { isCaptainView, board } = storeToRefs(store);
-const { nextGame } = store;
+const broker = inject("broker");
+const { isCaptainView, board } = storeToRefs(useGameStore());
 </script>
 
 <template>
@@ -66,7 +65,7 @@ const { nextGame } = store;
             {{ score.red }}
         </div>
         <div>
-            <button @click="nextGame">New game</button>
+            <button @click="broker.nextGame()">New game</button>
         </div>
         <div class="blue">
             {{ score.blue }}

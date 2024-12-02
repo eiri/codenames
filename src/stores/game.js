@@ -8,7 +8,6 @@ export const useGameStore = defineStore("game", () => {
   const boardSize = 25;
 
   const rnd = inject("rnd");
-  const broker = inject("broker");
 
   const board = ref(
     Array(boardSize)
@@ -27,80 +26,6 @@ export const useGameStore = defineStore("game", () => {
   const isCaptainView = ref(false);
   const gameKey = ref("");
 
-  const username = localStorage.getItem("username");
-  const password = localStorage.getItem("password");
-  const room = localStorage.getItem("room");
-
-  // callbacks
-  const onReqState = ({ data }) => {
-    console.debug(`received reqState ${JSON.stringify(data)} as ${username}`);
-    if (data.to != username) {
-      return;
-    }
-    const payload = {
-      state: getState(),
-      to: data.from,
-    };
-    console.debug(`publish ackState ${JSON.stringify(payload)}`);
-    broker.channel.publish("ackState", payload);
-  };
-
-  const onAckState = ({ data }) => {
-    console.debug(`received ackState ${JSON.stringify(data)} as ${username}`);
-    const {
-      to,
-      state: { key, state },
-    } = data;
-    if (to != username || key == gameKey.value) {
-      return;
-    }
-    gameKey.value = key;
-    buildGame();
-    board.value.forEach((card, i) => (card.state = state[i]));
-    console.debug(`subscribed: ok (${gameKey.value})`);
-  };
-
-  const onOpen = ({ data }) => {
-    console.debug(`received open ${JSON.stringify(data)} as ${username}`);
-    const idx = data.idx;
-    if (board.value[idx] && board.value[idx].closed()) {
-      board.value[idx].state -= 1;
-    }
-  };
-
-  const onNextGame = ({ data }) => {
-    console.debug(`received nextGame ${JSON.stringify(data)} as ${username}`);
-    gameKey.value = data.gameKey;
-    buildGame();
-  };
-
-  const connect = async () => {
-    if (username == null || room == null) {
-      console.error(`missing username or room ${username} ${room}`);
-      return;
-    }
-    // connect ot broker, enter presence
-    await broker.connect(username, password, room);
-    // set channel callbacks
-    broker.channel.subscribe("reqState", onReqState);
-    broker.channel.subscribe("ackState", onAckState);
-
-    broker.channel.subscribe("open", onOpen);
-    broker.channel.subscribe("nextGame", onNextGame);
-    // sync state
-    console.debug(`syncLeader: ${broker.syncLeader}`);
-    const payload = {
-      from: username,
-      to: broker.syncLeader,
-    };
-    console.debug(`publish reqState ${JSON.stringify(payload)}`);
-    broker.channel.publish("reqState", payload);
-  };
-
-  const disconnect = async () => {
-    await broker.disconnect(username);
-  };
-
   const getState = () => {
     if (gameKey.value == "") {
       gameKey.value = nextWord();
@@ -112,11 +37,13 @@ export const useGameStore = defineStore("game", () => {
     };
   };
 
+  const setState = (state) => {
+    board.value.forEach((card, i) => (card.state = state[i]));
+  };
+
   const open = (idx) => {
     if (board.value[idx] && board.value[idx].closed()) {
-      const payload = { idx };
-      console.debug(`publish open ${JSON.stringify(payload)}`);
-      broker.channel.publish("open", payload);
+      board.value[idx].state -= 1;
     }
   };
 
@@ -159,14 +86,8 @@ export const useGameStore = defineStore("game", () => {
     return word;
   };
 
-  // FIXME: it is possible to get same board in a single session
-  // so better is to keep fixed sized table of unique words
-  // to make sure there are at least N unique boards
-  const nextGame = () => {
-    gameKey.value = nextWord();
-    const payload = { gameKey: gameKey.value };
-    console.debug(`publish nextGame ${JSON.stringify(payload)}`);
-    broker.channel.publish("nextGame", payload);
+  const setGameKey = (key) => {
+    gameKey.value = key;
   };
 
   const buildGame = () => {
@@ -212,10 +133,11 @@ export const useGameStore = defineStore("game", () => {
     isCaptainView,
     board,
     getState,
+    setState,
     open,
-    connect,
-    disconnect,
-    nextGame,
+    nextWord,
+    setGameKey,
+    buildGame,
     $reset,
   };
 });

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, toRefs } from "vue";
+import { computed, toRefs, inject } from "vue";
 import { storeToRefs } from "pinia";
 
 import { useGameStore } from "@/stores/game.js";
@@ -13,9 +13,8 @@ const props = defineProps({
 
 const { card } = toRefs(props);
 
-const store = useGameStore();
-const { isCaptainView } = storeToRefs(store);
-const { open } = store;
+const broker = inject("broker");
+const { isCaptainView } = storeToRefs(useGameStore());
 
 const cardClass = computed(() => {
     if (!isCaptainView.value && card.value.closed()) {
@@ -29,7 +28,7 @@ const cardClass = computed(() => {
     <article
         class="animate__animated"
         :class="[cardClass, { animate__flipInY: !card.closed() }]"
-        @click="open(card.idx)"
+        @click="broker.open(card.idx)"
     >
         <span>{{ card.word }}</span>
     </article>

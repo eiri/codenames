@@ -1,15 +1,13 @@
 <script setup>
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, inject } from "vue";
 import { useRouter } from "vue-router";
 
-import { useGameStore } from "@/stores/game.js";
 import Info from "@/components/Info.vue";
 import Controls from "@/components/Controls.vue";
 import Screen from "@/components/Screen.vue";
 
 const router = useRouter();
-const store = useGameStore();
-const { connect, disconnect } = store;
+const broker = inject("broker");
 
 onMounted(() => {
     // this page was reloaded
@@ -31,16 +29,15 @@ onMounted(() => {
 
     console.debug(`Game: onMounted ${username} ${room}`);
     localStorage.setItem("loggedIn", true);
-    connect();
+    broker.connect();
 });
 
 onUnmounted(() => {
     console.debug("Game: onUnmounted");
     if (localStorage.getItem("loggedIn")) {
-        disconnect();
+        broker.disconnect();
         localStorage.removeItem("loggedIn");
     }
-    store.$reset();
 });
 </script>
 
