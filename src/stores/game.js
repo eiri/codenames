@@ -28,8 +28,7 @@ export const useGameStore = defineStore("game", () => {
 
   const getState = () => {
     if (gameKey.value == "") {
-      gameKey.value = nextWord();
-      buildGame();
+      buildGame(null);
     }
     return {
       key: gameKey.value,
@@ -86,11 +85,11 @@ export const useGameStore = defineStore("game", () => {
     return word;
   };
 
-  const setGameKey = (key) => {
+  const buildGame = (key) => {
     gameKey.value = key;
-  };
-
-  const buildGame = () => {
+    if (gameKey.value == null || gameKey.value == "") {
+      gameKey.value = nextWord();
+    }
     console.debug(`buildGame for ${gameKey.value}`);
     rnd.mash(gameKey.value);
 
@@ -135,8 +134,6 @@ export const useGameStore = defineStore("game", () => {
     getState,
     setState,
     open,
-    nextWord,
-    setGameKey,
     buildGame,
     $reset,
   };

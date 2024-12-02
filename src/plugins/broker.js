@@ -75,12 +75,13 @@ class Broker {
       console.debug(
         `broker: received reqState ${JSON.stringify(data)} as ${this.#username}`,
       );
-      if (data.to != this.#username) {
+      const { to, from } = data;
+      if (to != this.#username) {
         return;
       }
       const payload = {
         state: this.gameStore.getState(),
-        to: data.from,
+        to: from,
       };
       console.debug(`broker: publish ackState ${JSON.stringify(payload)}`);
       this.channel.publish("ackState", payload);
@@ -97,29 +98,22 @@ class Broker {
       if (to != this.#username) {
         return;
       }
-      this.gameStore.setGameKey(key);
-      this.gameStore.buildGame();
+      this.gameStore.buildGame(key);
       this.gameStore.setState(state);
       console.debug(`broker: subscribed: ok (${key})`);
     });
 
-    this.channel.subscribe("open", ({ data }) => {
-      console.debug(
-        `broker: received open ${JSON.stringify(data)} as ${this.#username}`,
-      );
-      const idx = data.idx;
+    this.channel.subscribe("open", ({ data: { idx } }) => {
+      console.debug(`broker: received open ${idx} as ${this.#username}`);
       this.gameStore.open(idx);
     });
 
     // FIXME: it is possible to get same board in a single session
     // so better is to keep fixed sized table of unique words
     // to make sure there are at least N unique boards
-    this.channel.subscribe("nextGame", ({ data }) => {
-      console.debug(
-        `broker: received nextGame ${JSON.stringify(data)} as ${this.#username}`,
-      );
-      this.gameStore.setGameKey(data.gameKey);
-      this.gameStore.buildGame();
+    this.channel.subscribe("nextGame", () => {
+      console.debug(`broker: received nextGame as ${this.#username}`);
+      this.gameStore.buildGame(null);
     });
 
     // sync state
@@ -153,9 +147,8 @@ class Broker {
   }
 
   nextGame() {
-    const payload = { gameKey: this.gameStore.nextWord() };
-    console.debug(`broker: publish nextGame ${JSON.stringify(payload)}`);
-    this.channel.publish("nextGame", payload);
+    console.debug(`broker: send nextGame`);
+    this.channel.publish("nextGame", null);
   }
 }
 
