@@ -71,37 +71,51 @@ class Broker {
     await this.channel.presence.enterClient(this.#username);
 
     // set channel callbacks
-    this.channel.subscribe("reqState", ({ data }) => {
-      console.debug(
-        `broker: received reqState ${JSON.stringify(data)} as ${this.#username}`,
-      );
-      const { to, from } = data;
-      if (to != this.#username) {
-        return;
-      }
-      const payload = {
-        state: this.gameStore.getState(),
-        to: from,
-      };
-      console.debug(`broker: publish ackState ${JSON.stringify(payload)}`);
-      this.channel.publish("ackState", payload);
-    });
+    this.channel.subscribe(
+      "reqState",
+      ({
+        extras: {
+          headers: { from, to },
+        },
+      }) => {
+        console.debug(`broker: received reqState ${to} as ${this.#username}`);
+        if (to != this.#username) {
+          return;
+        }
+        const payload = {
+          name: "ackState",
+          data: this.gameStore.getState(),
+          extras: {
+            headers: {
+              from: this.#username,
+              to: from,
+            },
+          },
+        };
+        console.debug(`broker: publish ackState ${JSON.stringify(payload)}`);
+        this.channel.publish(payload);
+      },
+    );
 
-    this.channel.subscribe("ackState", ({ data }) => {
-      console.debug(
-        `broker: received ackState ${JSON.stringify(data)} as ${this.#username}`,
-      );
-      const {
-        to,
-        state: { key, state },
-      } = data;
-      if (to != this.#username) {
-        return;
-      }
-      this.gameStore.buildGame(key);
-      this.gameStore.setState(state);
-      console.debug(`broker: subscribed: ok (${key})`);
-    });
+    this.channel.subscribe(
+      "ackState",
+      ({
+        data: { key, state },
+        extras: {
+          headers: { from, to },
+        },
+      }) => {
+        console.debug(
+          `broker: received ackState with ${key} and ${state} from ${from} as ${this.#username}`,
+        );
+        if (to != this.#username) {
+          return;
+        }
+        this.gameStore.buildGame(key);
+        this.gameStore.setState(state);
+        console.debug(`broker: subscribed: ok (${key})`);
+      },
+    );
 
     this.channel.subscribe("open", ({ data: idx }) => {
       console.debug(`broker: received open ${idx} as ${this.#username}`);
@@ -118,11 +132,17 @@ class Broker {
 
     // sync state
     const payload = {
-      from: this.#username,
-      to: this.#syncLeader,
+      name: "reqState",
+      data: null,
+      extras: {
+        headers: {
+          from: this.#username,
+          to: this.#syncLeader,
+        },
+      },
     };
     console.debug(`broker: publish reqState ${JSON.stringify(payload)}`);
-    this.channel.publish("reqState", payload);
+    this.channel.publish(payload);
   }
 
   async disconnect() {
