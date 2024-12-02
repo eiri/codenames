@@ -24,7 +24,7 @@ export const useGameStore = defineStore("game", () => {
       }),
   );
 
-  const isCaptain = ref(false);
+  const isCaptainView = ref(false);
   const gameKey = ref("");
 
   const username = localStorage.getItem("username");
@@ -188,12 +188,12 @@ export const useGameStore = defineStore("game", () => {
       });
     }
 
-    isCaptain.value = false;
+    isCaptainView.value = false;
   };
 
   const $reset = () => {
     gameKey.value = "";
-    isCaptain.value = false;
+    isCaptainView.value = false;
     board.value = Array(boardSize)
       .fill()
       .map(() => {
@@ -209,7 +209,7 @@ export const useGameStore = defineStore("game", () => {
 
   return {
     gameKey,
-    isCaptain,
+    isCaptainView,
     board,
     getState,
     open,
