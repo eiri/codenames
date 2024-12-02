@@ -103,7 +103,7 @@ class Broker {
       console.debug(`broker: subscribed: ok (${key})`);
     });
 
-    this.channel.subscribe("open", ({ data: { idx } }) => {
+    this.channel.subscribe("open", ({ data: idx }) => {
       console.debug(`broker: received open ${idx} as ${this.#username}`);
       this.gameStore.open(idx);
     });
@@ -141,9 +141,8 @@ class Broker {
   }
 
   open(idx) {
-    const payload = { idx };
-    console.debug(`broker: publish open ${JSON.stringify(payload)}`);
-    this.channel.publish("open", payload);
+    console.debug(`broker: publish open ${idx}`);
+    this.channel.publish("open", idx);
   }
 
   nextGame() {
