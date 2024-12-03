@@ -25,7 +25,6 @@ export const usePlayersStore = defineStore("players", () => {
     return (-1 ^ n) >>> 0;
   };
 
-  const username = localStorage.getItem("username");
   const players = ref({});
 
   const addPlayer = (player) => {

@@ -14,6 +14,7 @@ class Broker {
     this.playersStore = usePlayersStore();
     this.gameStore = useGameStore();
     this.channel = null;
+    this.reqStateChannel = null;
   }
 
   async setClient() {
@@ -23,13 +24,11 @@ class Broker {
       password,
     );
     const ablyAPIKey = decrypted.toString(Utf8);
-    console.assert(ablyAPIKey != "");
+    if (ablyAPIKey == "") {
+      throw new Error("Invalid API Key");
+    }
 
     this.#ably = new Ably.Realtime(ablyAPIKey);
-    // debug logger
-    this.#ably.connection.on((stateChange) => {
-      console.debug(`broker: connection state ${JSON.stringify(stateChange)}`);
-    });
     await this.#ably.connection.once("connected");
     console.log("broker: connected");
   }
@@ -38,17 +37,22 @@ class Broker {
     console.debug(`broker: connect`);
 
     const room = localStorage.getItem("room");
+
+    this.#syncLeader = null;
     this.#username = localStorage.getItem("username");
 
     if (this.#username == null || room == null) {
-      console.error(`missing username or room ${username} ${room}`);
-      return;
+      throw new Error("Missing username or room");
     }
+
+    this.#syncLeader = this.#username;
 
     await this.setClient();
 
-    this.channel = this.#ably.channels.get(`room:${room}`);
+    const channelName = `room:${room}`;
+    this.channel = this.#ably.channels.get(channelName);
 
+    // is it really the best way to go around players state?
     await this.channel.presence.subscribe(async (msg) => {
       console.debug(`broker: presence ${JSON.stringify(msg)}`);
       const members = await this.channel.presence.get();
@@ -62,62 +66,10 @@ class Broker {
         }
       }
     });
-
-    if (this.#syncLeader == null) {
-      this.#syncLeader = this.#username;
-    }
-
-    // sync state
     await this.channel.presence.enterClient(this.#username);
 
-    // set channel callbacks
-    this.channel.subscribe(
-      "reqState",
-      ({
-        extras: {
-          headers: { from, to },
-        },
-      }) => {
-        console.debug(`broker: received reqState ${to} as ${this.#username}`);
-        if (to != this.#username) {
-          return;
-        }
-        const payload = {
-          name: "ackState",
-          data: this.gameStore.getState(),
-          extras: {
-            headers: {
-              from: this.#username,
-              to: from,
-            },
-          },
-        };
-        console.debug(`broker: publish ackState ${JSON.stringify(payload)}`);
-        this.channel.publish(payload);
-      },
-    );
-
-    this.channel.subscribe(
-      "ackState",
-      ({
-        data: { key, state },
-        extras: {
-          headers: { from, to },
-        },
-      }) => {
-        console.debug(
-          `broker: received ackState with ${key} and ${state} from ${from} as ${this.#username}`,
-        );
-        if (to != this.#username) {
-          return;
-        }
-        this.gameStore.buildGame(key);
-        this.gameStore.setState(state);
-        console.debug(`broker: subscribed: ok (${key})`);
-      },
-    );
-
-    this.channel.subscribe("open", ({ data: idx }) => {
+    // callbacks
+    await this.channel.subscribe("open", ({ data: idx }) => {
       console.debug(`broker: received open ${idx} as ${this.#username}`);
       this.gameStore.open(idx);
     });
@@ -125,39 +77,43 @@ class Broker {
     // FIXME: it is possible to get same board in a single session
     // so better is to keep fixed sized table of unique words
     // to make sure there are at least N unique boards
-    this.channel.subscribe("nextGame", () => {
+    await this.channel.subscribe("nextGame", () => {
       console.debug(`broker: received nextGame as ${this.#username}`);
       this.gameStore.buildGame(null);
     });
 
     // sync state
-    const payload = {
+    this.reqStateChannel = this.#ably.channels.getDerived(channelName, {
+      filter:
+        'name == `"reqState"` && headers.to == `"' + this.#username + '"`',
+    });
+    const onReqState = () => {
+      console.debug(`broker: received reqState`);
+      const state = this.gameStore.getState();
+      console.debug(`broker: publish ackState ${JSON.stringify(state)}`);
+      this.channel.publish("ackState", state);
+    };
+    await this.reqStateChannel.subscribe(onReqState);
+
+    // receive once
+    const onAckState = ({ data: { key, state } }) => {
+      console.debug(`broker: received ackState with key ${key} state ${state}`);
+      this.gameStore.buildGame(key);
+      this.gameStore.setState(state);
+      this.channel.unsubscribe("ackState");
+    };
+    this.channel.subscribe("ackState", onAckState);
+
+    console.debug(`broker: publish reqState`);
+    this.channel.publish({
       name: "reqState",
-      data: null,
       extras: {
         headers: {
           from: this.#username,
           to: this.#syncLeader,
         },
       },
-    };
-    console.debug(`broker: publish reqState ${JSON.stringify(payload)}`);
-    this.channel.publish(payload);
-  }
-
-  async disconnect() {
-    console.debug(`broker: disconnect`);
-    if (this.channel != null) {
-      await this.channel.presence.unsubscribe();
-      await this.channel.presence.leaveClient(this.#username);
-      await this.channel.unsubscribe();
-      await this.channel.detach();
-      this.channel = null;
-    }
-    this.gameStore.$reset();
-    this.playersStore.$reset();
-    this.#ably.connection.off();
-    this.#ably.close();
+    });
   }
 
   open(idx) {
@@ -168,6 +124,26 @@ class Broker {
   nextGame() {
     console.debug(`broker: send nextGame`);
     this.channel.publish("nextGame", null);
+  }
+
+  async disconnect() {
+    console.debug(`broker: disconnect`);
+    await this.channel.presence.unsubscribe();
+    await this.channel.presence.leaveClient(this.#username);
+
+    await this.reqStateChannel.unsubscribe();
+    await this.reqStateChannel.detach();
+    this.reqStateChannel = null;
+
+    await this.channel.unsubscribe();
+    await this.channel.detach();
+    this.channel = null;
+
+    this.gameStore.$reset();
+    this.playersStore.$reset();
+
+    this.#ably.connection.off();
+    this.#ably.close();
   }
 }
 

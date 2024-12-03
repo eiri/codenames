@@ -9,8 +9,7 @@ import Screen from "@/components/Screen.vue";
 const router = useRouter();
 const broker = inject("broker");
 
-onMounted(() => {
-    // this page was reloaded
+onMounted(async () => {
     if (localStorage.getItem("loggedIn")) {
         console.log("this page was reloaded");
         localStorage.removeItem("loggedIn");
@@ -18,18 +17,14 @@ onMounted(() => {
         return;
     }
 
-    const username = localStorage.getItem("username");
-    const room = localStorage.getItem("room");
-
-    if (username == null || room == null) {
-        console.error("missing username or room");
-        router.push(`/`);
-        return;
-    }
-
-    console.debug(`Game: onMounted ${username} ${room}`);
+    console.debug(`Game: onMounted`);
     localStorage.setItem("loggedIn", true);
-    broker.connect();
+    try {
+        await broker.connect();
+    } catch (error) {
+        console.error(error);
+        router.push(`/`);
+    }
 });
 
 onUnmounted(() => {
