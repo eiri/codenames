@@ -50,124 +50,63 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="overlay">
-        <form @submit.prevent="login">
-            <h1 v-show="error == ''">Login</h1>
-            <h1 v-show="error" class="error">{{ error }}</h1>
+    <div
+        class="grid place-items-center h-screen bg-cover bg-center bg-no-repeat bg-login"
+    >
+        <div
+            class="xl:w-1/4 lg:w-1/3 md:w-1/2 xl:h-2/3 lg:h-3/4 backdrop-blur-md bg-cyan-700/40 shadow-lg shadow-cyan-800/50 p-8 rounded-lg text-lg text-white font-sans"
+        >
+            <h1 class="text-3xl font-bold text-center mb-4">Login</h1>
+            <h2
+                class="text-xl font-bold text-center mb-4 text-red-400"
+                v-show="error"
+            >
+                {{ error }}
+            </h2>
+            <form @submit.prevent="login">
+                <div class="mb-4">
+                    <label for="username" class="block mb-2">Username</label>
+                    <input
+                        type="text"
+                        class="w-full px-4 py-2 border rounded-lg text-zinc-800"
+                        placeholder="Username"
+                        autocomplete="off"
+                        id="username"
+                        v-model.lazy.trim="username"
+                    />
+                </div>
 
-            <label for="username">Username</label>
-            <input
-                type="text"
-                placeholder="Username"
-                autocomplete="off"
-                id="username"
-                v-model.lazy.trim="username"
-            />
+                <div class="mb-4">
+                    <label for="room" class="block mb-2">Room</label>
+                    <input
+                        type="text"
+                        class="w-full px-4 py-2 border rounded-lg text-zinc-800"
+                        placeholder="#"
+                        autocomplete="off"
+                        id="room"
+                        v-model.lazy.trim="room"
+                    />
+                </div>
 
-            <label for="room">Room</label>
-            <input
-                type="text"
-                placeholder="#"
-                autocomplete="off"
-                id="room"
-                v-model.lazy.trim="room"
-            />
+                <div class="mb-16">
+                    <label for="password" class="block mb-2">Password</label>
+                    <input
+                        type="text"
+                        class="w-full px-4 py-2 border rounded-lg text-zinc-800"
+                        placeholder="Password"
+                        autocomplete="off"
+                        id="password"
+                        v-model.lazy.trim="password"
+                    />
+                </div>
 
-            <label for="password">Password</label>
-            <input
-                type="text"
-                placeholder="Password"
-                autocomplete="off"
-                id="password"
-                v-model.lazy.trim="password"
-            />
-
-            <button role="button">Enter</button>
-        </form>
+                <button
+                    class="w-full bg-zinc-100 text-zinc-800 px-4 py-2 rounded-lg active:scale-[.97]"
+                    role="button"
+                >
+                    Enter
+                </button>
+            </form>
+        </div>
     </div>
 </template>
-
-<style scoped>
-.overlay {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    top: 0;
-    z-index: 10;
-    background-image: url("assets/bg.jpg");
-    background-color: rgba(0, 0, 0, 1);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-
-    display: flex;
-    align-items: top;
-    justify-content: center;
-}
-
-.error {
-    color: var(--color-red-light);
-}
-
-h1 {
-    text-align: center;
-}
-
-form {
-    width: 380px;
-    position: absolute;
-    top: 2vh;
-    padding: 1rem;
-    border-radius: 10px;
-    background-color: rgba(111, 161, 187, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--box-shadow-high);
-}
-
-form * {
-    font-size: 1.2rem;
-    font-family: var(--font-sans);
-    color: var(--color-background);
-    letter-spacing: 0.5px;
-    outline: none;
-    border: none;
-}
-
-label {
-    display: block;
-    margin: 2rem 0rem 1rem;
-}
-
-input {
-    width: 100%;
-    height: 3rem;
-    padding: 0 0.5rem;
-    background-color: rgba(111, 161, 187, 0.7);
-    border-radius: 4px;
-    box-sizing: border-box;
-    resize: vertical;
-}
-
-::placeholder {
-    color: var(--color-background);
-    opacity: 0.6;
-}
-
-button {
-    width: 100%;
-    height: 3rem;
-    margin-top: 3rem;
-    margin-bottom: 3rem;
-    color: var(--color-text-dark);
-    background-color: var(--color-background);
-    border-radius: 4px;
-    box-shadow: var(--box-shadow-high);
-}
-
-button:active {
-    box-shadow: var(--box-shadow-low);
-    transform: translateY(2px);
-}
-</style>

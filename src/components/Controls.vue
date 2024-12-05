@@ -53,130 +53,49 @@ const { isCaptainView, board } = storeToRefs(useGameStore());
 </script>
 
 <template>
-    <div class="wrapper">
-        <div>
-            <div v-show="score.gameOver == 'black'">Both teams lost</div>
-            <div class="red" v-show="score.gameOver == 'red'">Red team won</div>
-            <div class="blue" v-show="score.gameOver == 'blue'">
+    <div class="grid grid-cols-5 gap-4 text-4xl">
+        <div class="flex justify-center">
+            <div class="text-black" v-show="score.gameOver == 'black'">
+                Both teams lost
+            </div>
+            <div class="text-code-red-700" v-show="score.gameOver == 'red'">
+                Red team won
+            </div>
+            <div class="text-code-blue-700" v-show="score.gameOver == 'blue'">
                 Blue team won
             </div>
         </div>
-        <div class="red">
+        <div class="flex justify-center text-code-red-700">
             {{ score.red }}
         </div>
-        <div>
-            <button @click="broker.nextGame()">New game</button>
+        <div class="flex justify-center">
+            <button
+                class="w-2/3 h-12 px-4 py-0 bg-teal-700 shadow-lg shadow-teal-500/50 text-white rounded-md cursor-pointer active:scale-[.97] font-sans xl:text-2xl lg:text-xl md:text-sm"
+                @click="broker.nextGame()"
+            >
+                New game
+            </button>
         </div>
-        <div class="blue">
+        <div class="flex justify-center text-code-blue-700">
             {{ score.blue }}
         </div>
-        <div class="nu">
-            <img class="crown" src="../assets/crown.svg" />
+        <div class="flex justify-center">
             <label
+                class="inline-flex items-center cursor-pointer"
                 :class="isCaptainView ? 'switch-on' : 'switch-off'"
                 for="captain"
             >
-                <input type="checkbox" id="captain" v-model="isCaptainView" />
-                <div class="circle"></div>
+                <img class="size-8 mr-2" src="@/assets/crown.svg" />
+                <input
+                    type="checkbox"
+                    id="captain"
+                    v-model="isCaptainView"
+                    class="sr-only peer"
+                />
+                <div
+                    class="relative w-14 h-7 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-teal-700"
+                ></div>
             </label>
         </div>
     </div>
 </template>
-
-<style scoped>
-div.wrapper {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
-    /*border: 1px solid blue;*/
-}
-
-.wrapper > div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: row;
-    /*border: 1px solid red;*/
-}
-
-div {
-    font-size: 2.4rem;
-    line-height: 2.4rem;
-}
-
-img {
-    width: 2rem;
-    margin-right: 0.4rem;
-}
-
-.key {
-    position: relative;
-    top: 0.4rem;
-    right: -0.2rem;
-}
-
-.red {
-    color: var(--color-red);
-}
-
-.blue {
-    color: var(--color-blue);
-}
-
-/*
-img.down {
-  opacity: 0.2;
-}
-*/
-
-button {
-    cursor: pointer;
-    font-family: var(--font-serif);
-    font-size: 2rem;
-    width: 100%;
-    height: 3rem;
-    padding: 0 1rem;
-    margin: 0;
-    color: var(--color-text-light);
-    background-color: var(--color-green);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    box-shadow: var(--box-shadow-high);
-    transition: 0.1s;
-    text-align: center;
-    display: inline-block;
-}
-
-button:active {
-    box-shadow: var(--box-shadow-low);
-    transform: translateY(2px);
-}
-
-label {
-    display: flex;
-    border-radius: 9999px;
-    height: 2rem;
-    width: 4rem;
-}
-
-input[type="checkbox"] {
-    display: none;
-}
-
-.circle {
-    border-radius: 9999px;
-    width: 2rem;
-    background-color: var(--color-white);
-}
-
-.switch-on {
-    background-color: var(--color-green);
-    border: 1px solid var(--color-border-hover);
-}
-
-.switch-off {
-    background-color: var(--color-background-soft);
-    border: 1px solid var(--color-border);
-    justify-content: flex-end;
-}
-</style>

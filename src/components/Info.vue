@@ -14,86 +14,30 @@ const { players } = storeToRefs(playersStore);
 </script>
 
 <template>
-    <div class="wrapper">
-        <div class="left">
-            <img class="key" src="../assets/room.svg" />
-            {{ room }}
+    <div class="flex items-center text-2xl font-sans">
+        <div class="flex-none">
+            <img class="size-6" src="../assets/room.svg" />
         </div>
-        <div class="left">
-            <img class="key" src="../assets/key.svg" />
-            {{ gameKey }}
+        <div class="flex-none pl-1">{{ room }}</div>
+        <div class="flex-none pl-5">
+            <img class="size-6" src="../assets/key.svg" />
         </div>
-        <div class="right avatars">
-            <div class="avatar__item" v-for="player in players">
+        <div class="flex-none pl-1">{{ gameKey }}</div>
+        <div class="flex-auto">
+            <div class="flex justify-end -space-x-1">
                 <div
-                    class="avatar"
+                    class="relative inline-block w-10 h-10 p-1 rounded-full ring-2 ring-gray-300 shadow-md bg-gradient-to-br from-transparent to-white text-center capitalize text-gray-600/80"
                     :style="{ 'background-color': player.color }"
+                    v-for="player in players"
                 >
                     {{ player.short }}
                 </div>
             </div>
         </div>
-        <div class="right">
+        <div class="flex-none pl-5">
             <router-link to="/">
-                <img src="../assets/logout.svg" />
+                <img class="size-6" src="../assets/logout.svg" />
             </router-link>
         </div>
     </div>
 </template>
-
-<style scoped>
-div.wrapper {
-    display: grid;
-    grid-template-columns: 0.1fr repeat(2, 1fr) 0.1fr;
-    gap: 1rem;
-}
-
-.wrapper > div {
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    font-family: var(--font-sans);
-    font-size: 1.4rem;
-    line-height: 1.4rem;
-}
-
-img {
-    width: 1.6rem;
-    margin-right: 0.3rem;
-}
-
-.left {
-    justify-content: left;
-}
-
-.right {
-    justify-content: right;
-}
-
-.avatars {
-    display: flex;
-}
-
-.avatar__item {
-    margin-left: -0.25rem;
-}
-
-.avatar {
-    box-shadow: 0 0 0 0.25rem var(--color-white);
-    background: linear-gradient(
-        to bottom right,
-        rgba(0, 0, 0, 0),
-        rgba(255, 255, 255, 1)
-    );
-
-    align-items: center;
-    display: flex;
-    justify-content: center;
-
-    text-transform: capitalize;
-    height: 2.4rem;
-    width: 2.4rem;
-    border: 1px solid var(--color-border);
-    border-radius: 50%;
-}
-</style>

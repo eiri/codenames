@@ -37,25 +37,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <header>
+    <header class="p-4 shadow-md">
         <Info />
     </header>
-    <main>
+    <main class="p-4">
         <Screen />
     </main>
-    <footer>
+    <footer class="pt-12">
         <Controls />
     </footer>
 </template>
-
-<style scoped>
-header,
-main,
-footer {
-    padding: 1rem;
-}
-
-header {
-    box-shadow: var(--box-shadow-low);
-}
-</style>

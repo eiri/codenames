@@ -18,90 +18,60 @@ const { isCaptainView } = storeToRefs(useGameStore());
 
 const cardClass = computed(() => {
     if (!isCaptainView.value && card.value.closed()) {
-        return "card-3";
+        return "card-3 shadow-md hover:shadow-xl";
     }
-    return `card-${card.value.state} ${card.value.closed() ? "" : "open"}`;
+    return `card-${card.value.state} ${card.value.closed() ? "shadow-md hover:shadow-xl" : "shadow-xl"}`;
 });
 </script>
 
 <template>
     <article
-        class="animate__animated"
+        class="animate__animated transition-transform duration-150 cursor-pointer flex items-center justify-center text-4xl border border-zinc-400 rounded-md shadow-zinc-500/50"
         :class="[cardClass, { animate__flipInY: !card.closed() }]"
         @click="broker.open(card.idx)"
     >
-        <span>{{ card.word }}</span>
+        <span class="xl:text-4xl lg:text-2xl md:text-lg">{{ card.word }}</span>
     </article>
 </template>
 
-<style scoped>
-article {
-    cursor: pointer;
-    display: inline;
-    font-size: 2vw;
-    height: 7vh;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    box-shadow: var(--box-shadow-low);
-    transition: var(--animate-transition);
-    -webkit-transition: -webkit-transform var(--animate-transition);
-    -webkit-backface-visibility: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-article:hover,
-.open {
-    border: 1px solid var(--color-border-hover);
-    box-shadow: var(--box-shadow-high);
-}
-
+<style lang="postcss" scoped>
 /* black-open */
 .card-0 {
-    color: var(--color-text-light);
-    background-color: var(--color-black);
+    @apply text-white bg-zinc-950;
 }
 
-/* black-open */
+/* black-closed */
 .card-1 {
-    color: var(--color-text-dark);
-    background-color: var(--color-black-light);
+    @apply text-zinc-900 bg-zinc-950/20;
 }
 
 /* white-open */
 .card-2 {
-    color: var(--color-text-dark);
-    background-color: var(--color-white);
+    @apply text-zinc-900 bg-white;
 }
 
 /* white-closed */
 .card-3 {
-    color: var(--color-text-dark);
-    background-color: var(--color-white-dark);
+    @apply text-zinc-900 bg-ivory;
 }
 
 /* red-open */
 .card-4 {
-    color: var(--color-text-light);
-    background-color: var(--color-red);
+    @apply text-white bg-code-red-700;
 }
 
 /* red-closed */
 .card-5 {
-    color: var(--color-text-dark);
-    background-color: var(--color-red-light);
+    @apply text-zinc-900 bg-code-red-300;
 }
 
 /* blue-open */
 .card-6 {
-    color: var(--color-text-light);
-    background-color: var(--color-blue);
+    @apply text-white bg-code-blue-700;
 }
 
 /* blue-closed */
 .card-7 {
-    color: var(--color-text-dark);
-    background-color: var(--color-blue-light);
+    @apply text-zinc-900 bg-code-blue-300;
 }
 </style>
