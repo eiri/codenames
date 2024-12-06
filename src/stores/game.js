@@ -1,4 +1,4 @@
-import { ref, inject } from "vue";
+import { ref, reactive, inject } from "vue";
 import { defineStore } from "pinia";
 
 import words from "@/assets/words.json";
@@ -9,6 +9,7 @@ export const useGameStore = defineStore("game", () => {
 
   const rnd = inject("rnd");
 
+  const gameKey = ref("");
   const board = ref(
     Array(boardSize)
       .fill()
@@ -22,9 +23,11 @@ export const useGameStore = defineStore("game", () => {
         };
       }),
   );
-
-  const isCaptainView = ref(false);
-  const gameKey = ref("");
+  const score = reactive({
+    red: Math.round((boardSize - 1) / 3),
+    blue: Math.round((boardSize - 1) / 3) - 1,
+  });
+  const gameOver = ref("");
 
   const getState = () => {
     if (gameKey.value == "") {
@@ -43,6 +46,21 @@ export const useGameStore = defineStore("game", () => {
   const open = (idx) => {
     if (board.value[idx] && board.value[idx].closed()) {
       board.value[idx].state -= 1;
+      if (board.value[idx].state == CardState.RedOpened) {
+        score.red -= 1;
+        if (score.red == 0) {
+          gameOver.value = "Red team won";
+        }
+      }
+      if (board.value[idx].state == CardState.BlueOpened) {
+        score.blue -= 1;
+        if (score.blue == 0) {
+          gameOver.value = "Blue team won";
+        }
+      }
+      if (board.value[idx].state == CardState.BlackOpened) {
+        gameOver.value = "Both teams lost";
+      }
     }
   };
 
@@ -107,13 +125,13 @@ export const useGameStore = defineStore("game", () => {
         },
       });
     }
-
-    isCaptainView.value = false;
+    score.red = Math.round((boardSize - 1) / 3);
+    score.blue = score.red - 1;
+    gameOver.value = "";
   };
 
   const $reset = () => {
     gameKey.value = "";
-    isCaptainView.value = false;
     board.value = Array(boardSize)
       .fill()
       .map(() => {
@@ -125,12 +143,16 @@ export const useGameStore = defineStore("game", () => {
           },
         };
       });
+    score.red = Math.round((boardSize - 1) / 3);
+    score.blue = score.red - 1;
+    gameOver.value = "";
   };
 
   return {
     gameKey,
-    isCaptainView,
     board,
+    score,
+    gameOver,
     getState,
     setState,
     open,
