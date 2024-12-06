@@ -9,7 +9,7 @@ const { board } = storeToRefs(store);
 </script>
 
 <template>
-    <div class="grid grid-cols-5 gap-12 h-[75vh]">
+    <div class="grid grid-cols-5 gap-12 h-[70vh]">
         <Card v-for="(card, i) in board" :key="i" :card="card" />
     </div>
 </template>

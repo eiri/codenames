@@ -1,8 +1,7 @@
 <script setup>
 import { computed, toRefs, inject } from "vue";
-import { storeToRefs } from "pinia";
 
-import { useGameStore } from "@/stores/game.js";
+import { usePlayersStore } from "@/stores/players.js";
 
 const props = defineProps({
     card: {
@@ -14,10 +13,16 @@ const props = defineProps({
 const { card } = toRefs(props);
 
 const broker = inject("broker");
-const { isCaptainView } = storeToRefs(useGameStore());
+const { isCaptainView } = usePlayersStore();
+
+const open = (idx) => {
+    if (card.value.closed()) {
+        broker.open(idx);
+    }
+};
 
 const cardClass = computed(() => {
-    if (!isCaptainView.value && card.value.closed()) {
+    if (!isCaptainView() && card.value.closed()) {
         return "card-3 shadow-md hover:shadow-xl";
     }
     return `card-${card.value.state} ${card.value.closed() ? "shadow-md hover:shadow-xl" : "shadow-xl"}`;
@@ -28,7 +33,7 @@ const cardClass = computed(() => {
     <article
         class="animate__animated transition-transform duration-150 cursor-pointer flex items-center justify-center text-4xl border border-zinc-400 rounded-md shadow-zinc-500/50"
         :class="[cardClass, { animate__flipInY: !card.closed() }]"
-        @click="broker.open(card.idx)"
+        @click="open(card.idx)"
     >
         <span class="xl:text-4xl lg:text-2xl md:text-lg">{{ card.word }}</span>
     </article>

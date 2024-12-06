@@ -1,54 +1,86 @@
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { defineStore } from "pinia";
 
 export const usePlayersStore = defineStore("players", () => {
-  // https://colorkit.co/palette/ffadad-ffd6a5-fdffb6-caffbf-9bf6ff-a0c4ff-bdb2ff-ffc6ff/
-  const palette = [
-    "#ffadad",
-    "#ffd6a5",
-    "#fdffb6",
-    "#caffbf",
-    "#9bf6ff",
-    "#a0c4ff",
-    "#bdb2ff",
-    "#ffc6ff",
-  ];
-  // from https://stackoverflow.com/a/50579690
-  const crc32 = function (r) {
-    for (var a, o = [], c = 0; c < 256; c++) {
-      a = c;
-      for (var f = 0; f < 8; f++) a = 1 & a ? 3988292384 ^ (a >>> 1) : a >>> 1;
-      o[c] = a;
-    }
-    for (var n = -1, t = 0; t < r.length; t++)
-      n = (n >>> 8) ^ o[255 & (n ^ r.charCodeAt(t))];
-    return (-1 ^ n) >>> 0;
-  };
-
+  const player = ref("");
   const players = ref({});
 
-  const addPlayer = (player) => {
-    players.value[player] = {
-      name: player,
-      short: player[0],
-      color: palette[crc32(player) % palette.length],
-      captain: false,
+  const regulars = reactive({
+    Eiri: {
+      name: "Eiri",
+      lj: "eiri",
+      avatar: "https://l-userpic.livejournal.com/38941189/689880", // https://l-userpic.livejournal.com/127274177/689880
+    },
+    Akari: {
+      name: "Akari",
+      lj: "akari_chan",
+      avatar: "https://l-userpic.livejournal.com/120407741/755293",
+    },
+    Vitaliy: {
+      name: "Vitaliy",
+      lj: "seminarist",
+      avatar: "https://l-userpic.livejournal.com/45172718/788486",
+    },
+    Ikadell: {
+      name: "Ikadell",
+      lj: "ikadell",
+      avatar: "https://l-userpic.livejournal.com/11807164/1840678",
+    },
+    Friday: {
+      name: "Friday",
+      lj: "next_friday",
+      avatar: "https://l-userpic.livejournal.com/57379634/818233",
+    },
+  });
+
+  const addPlayer = (p, data) => {
+    players.value[p] = {
+      name: p,
+      avatar: regulars[p]
+        ? regulars[p].avatar
+        : "http://placekitten.com/250/250",
+      captain: data ? data.isCaptain : false,
       team: "white",
     };
   };
 
-  const removePlayer = (player) => {
-    delete players.value[player];
+  const removePlayer = (p) => {
+    delete players.value[p];
+  };
+
+  const setPlayer = (p) => {
+    player.value = p;
+  };
+
+  const setCaptain = (p, isCaptain) => {
+    players.value[p].captain = isCaptain;
+  };
+
+  const isCaptainView = () => {
+    const me = players.value[player.value];
+    return me ? me.captain : false;
+  };
+
+  const newGame = () => {
+    for (const p in players.value) {
+      players.value[p].captain = false;
+    }
   };
 
   const $reset = () => {
+    player.value = "";
     players.value = {};
   };
 
   return {
     players,
+    regulars,
     addPlayer,
     removePlayer,
+    setPlayer,
+    setCaptain,
+    isCaptainView,
+    newGame,
     $reset,
   };
 });
