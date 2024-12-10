@@ -146,6 +146,7 @@ class Broker {
 
   open(idx) {
     console.debug(`broker: publish open ${idx}`);
+    this.gameStore.open(idx);
     this.channel.publish("open", idx);
   }
 
@@ -156,6 +157,8 @@ class Broker {
 
   toggleCaptain(isCaptain) {
     console.debug(`broker: send toggleCaptain ${isCaptain}`);
+    this.playersStore.setCaptain(this.#username, isCaptain);
+    this.gameStore.isCaptainView = isCaptain;
     this.channel.presence.update({ isCaptain });
   }
 
