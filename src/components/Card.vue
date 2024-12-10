@@ -1,28 +1,29 @@
 <script setup>
-import { computed, toRefs, inject } from "vue";
-
-import { usePlayersStore } from "@/stores/players.js";
+import { computed, toRefs } from "vue";
 
 const props = defineProps({
     card: {
         type: Object,
         required: true,
     },
+    isCaptainView: {
+        type: Boolean,
+    },
+    open: {
+        type: Function,
+    },
 });
 
 const { card } = toRefs(props);
 
-const broker = inject("broker");
-const { isCaptainView } = usePlayersStore();
-
-const open = (idx) => {
+const open = () => {
     if (card.value.closed()) {
-        broker.open(idx);
+        props.open(card.value.idx);
     }
 };
 
 const cardClass = computed(() => {
-    if (!isCaptainView() && card.value.closed()) {
+    if (!props.isCaptainView && card.value.closed()) {
         return "card-3 shadow-md hover:shadow-xl";
     }
     return `card-${card.value.state} ${card.value.closed() ? "shadow-md hover:shadow-xl" : "shadow-xl"}`;
@@ -31,9 +32,13 @@ const cardClass = computed(() => {
 
 <template>
     <article
-        class="animate__animated transition-transform duration-150 cursor-pointer flex items-center justify-center text-4xl border border-zinc-400 rounded-md shadow-zinc-500/50"
-        :class="[cardClass, { animate__flipInY: !card.closed() }]"
-        @click="open(card.idx)"
+        class="animate__animated transition-transform duration-150 flex items-center justify-center text-4xl border border-zinc-400 rounded-md shadow-zinc-500/50"
+        :class="[
+            cardClass,
+            { animate__flipInY: !card.closed() },
+            { 'cursor-pointer': card.closed() },
+        ]"
+        @click="open()"
     >
         <span class="xl:text-4xl lg:text-2xl md:text-lg">{{ card.word }}</span>
     </article>
