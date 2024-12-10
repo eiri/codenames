@@ -12,18 +12,7 @@ const { isCaptainView } = usePlayersStore();
 
 <template>
     <div class="grid grid-cols-5 gap-4 text-4xl">
-        <div class="flex justify-center">
-            <div
-                :class="{
-                    'text-black': score.red != 0 && score.blue != 0,
-                    'text-code-red-700': score.red == 0,
-                    'text-code-blue-700': score.blue == 0,
-                }"
-                v-show="gameOver != ''"
-            >
-                {{ gameOver }}
-            </div>
-        </div>
+        <div class="flex justify-center"></div>
         <div class="flex justify-center text-code-red-700">
             {{ score.red }}
         </div>
