@@ -6,20 +6,15 @@ export const usePlayersStore = defineStore("players", () => {
   const players = ref({});
 
   const regulars = reactive({
-    Eiri: {
-      name: "Eiri",
-      lj: "eiri",
-      avatar: "https://l-userpic.livejournal.com/38941189/689880", // https://l-userpic.livejournal.com/127274177/689880
-    },
     Akari: {
       name: "Akari",
       lj: "akari_chan",
       avatar: "https://l-userpic.livejournal.com/120407741/755293",
     },
-    Vitaliy: {
-      name: "Vitaliy",
-      lj: "seminarist",
-      avatar: "https://l-userpic.livejournal.com/45172718/788486",
+    Eiri: {
+      name: "Eiri",
+      lj: "eiri",
+      avatar: "https://l-userpic.livejournal.com/38941189/689880", // https://l-userpic.livejournal.com/127274177/689880
     },
     Ikadell: {
       name: "Ikadell",
@@ -30,6 +25,11 @@ export const usePlayersStore = defineStore("players", () => {
       name: "Friday",
       lj: "next_friday",
       avatar: "https://l-userpic.livejournal.com/57379634/818233",
+    },
+    Vitaliy: {
+      name: "Vitaliy",
+      lj: "seminarist",
+      avatar: "https://l-userpic.livejournal.com/45172718/788486",
     },
   });
 
