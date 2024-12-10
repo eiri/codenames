@@ -18,7 +18,11 @@ class Broker {
   }
 
   async setClient() {
+    const username = localStorage.getItem("username");
     const password = localStorage.getItem("password");
+    if (username == null || password == null) {
+      throw new Error("Missing username or password");
+    }
     const decrypted = AES.decrypt(
       import.meta.env.VITE_KEY_CIPHERTEXT,
       password,
@@ -28,8 +32,9 @@ class Broker {
       throw new Error("Invalid API Key");
     }
 
-    this.#client = new Realtime(ablyAPIKey);
+    this.#client = new Realtime({ key: ablyAPIKey, clientId: username });
     await this.#client.connection.once("connected");
+    this.#username = username;
     console.log("broker: connected");
   }
 
@@ -37,18 +42,12 @@ class Broker {
     console.debug(`broker: connect`);
 
     const room = localStorage.getItem("room");
-
-    this.#syncLeader = null;
-    this.#username = localStorage.getItem("username");
-
-    if (this.#username == null || room == null) {
-      throw new Error("Missing username or room");
+    if (room == null) {
+      throw new Error("Missing room");
     }
 
-    this.#syncLeader = this.#username;
-    this.playersStore.setPlayer(this.#username);
-
     await this.setClient();
+    this.playersStore.setPlayer(this.#username);
 
     const channelName = `room:${room}`;
     this.channel = this.#client.channels.get(channelName);
@@ -81,6 +80,7 @@ class Broker {
       }
     });
 
+    this.#syncLeader = this.#username;
     const members = await this.channel.presence.get();
     console.debug(`broker: sync members (${members.length})`);
     this.playersStore.$reset();
@@ -93,7 +93,7 @@ class Broker {
       }
     }
 
-    await this.channel.presence.enterClient(this.#username);
+    await this.channel.presence.enter();
 
     // callbacks
     await this.channel.subscribe("open", ({ data: idx }) => {
@@ -156,13 +156,13 @@ class Broker {
 
   toggleCaptain(isCaptain) {
     console.debug(`broker: send toggleCaptain ${isCaptain}`);
-    this.channel.presence.updateClient(this.#username, { isCaptain });
+    this.channel.presence.update({ isCaptain });
   }
 
   async disconnect() {
     console.debug(`broker: disconnect`);
     await this.channel.presence.unsubscribe();
-    await this.channel.presence.leaveClient(this.#username);
+    await this.channel.presence.leave();
 
     await this.reqStateChannel.unsubscribe();
     await this.reqStateChannel.detach();
