@@ -8,9 +8,15 @@ import { usePlayersStore } from "@/stores/players.js";
 
 const broker = inject("broker");
 const { score } = storeToRefs(useGameStore());
-const { isCaptainView } = usePlayersStore();
-const toggleCaptain = () => {
-    broker.toggleCaptain(!isCaptainView());
+const { isRedCaptain, isRedCaptainTaken, isBlueCaptain, isBlueCaptainTaken } =
+    usePlayersStore();
+
+const toggleRedCaptain = () => {
+    broker.setCaptain(isRedCaptain() ? 0 : 1);
+};
+
+const toggleBlueCaptain = () => {
+    broker.setCaptain(isBlueCaptain() ? 0 : 2);
 };
 </script>
 
@@ -19,8 +25,9 @@ const toggleCaptain = () => {
         <div class="flex justify-center">
             <Toggle
                 team="red"
-                :isCaptainView="isCaptainView()"
-                :toggleCaptain="toggleCaptain"
+                :disabled="isRedCaptainTaken() && !isRedCaptain()"
+                :isCaptainView="isRedCaptain()"
+                :toggleCaptain="toggleRedCaptain"
             />
         </div>
         <div class="flex justify-center text-code-red-700">
@@ -40,8 +47,9 @@ const toggleCaptain = () => {
         <div class="flex justify-center">
             <Toggle
                 team="blue"
-                :isCaptainView="isCaptainView()"
-                :toggleCaptain="toggleCaptain"
+                :disabled="isBlueCaptainTaken() && !isBlueCaptain()"
+                :isCaptainView="isBlueCaptain()"
+                :toggleCaptain="toggleBlueCaptain"
             />
         </div>
     </div>

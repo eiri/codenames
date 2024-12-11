@@ -10,6 +10,9 @@ const props = defineProps({
     toggleCaptain: {
         type: Function,
     },
+    disabled: {
+        type: Boolean,
+    },
 });
 </script>
 
@@ -32,11 +35,20 @@ const props = defineProps({
             type="checkbox"
             :id="props.team"
             :checked="props.isCaptainView"
+            :disabled="props.disabled"
             @change="props.toggleCaptain()"
             class="sr-only peer"
         />
         <div
-            class="relative w-14 h-7 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-teal-700"
+            :class="{
+                'peer-checked:bg-code-red-700': props.team == 'red',
+                'peer-checked:bg-code-blue-700': props.team == 'blue',
+                'bg-zinc-200': props.disabled,
+                'after:border-zinc-200': props.disabled,
+                'bg-zinc-400': !props.disabled,
+                'after:border-zinc-400': !props.disabled,
+            }"
+            class="relative w-14 h-7 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all"
         ></div>
     </label>
 </template>

@@ -33,14 +33,19 @@ export const usePlayersStore = defineStore("players", () => {
     },
   });
 
+  const Captain = Object.freeze({
+    None: 0,
+    Red: 1,
+    Blue: 2,
+  });
+
   const addPlayer = (p, data) => {
     players.value[p] = {
       name: p,
       avatar: regulars[p]
         ? regulars[p].avatar
         : "http://placekitten.com/250/250",
-      captain: data ? data.isCaptain : false,
-      team: "white",
+      captain: Captain.None,
     };
   };
 
@@ -52,13 +57,37 @@ export const usePlayersStore = defineStore("players", () => {
     player.value = p;
   };
 
-  const setCaptain = (p, isCaptain) => {
-    players.value[p].captain = isCaptain;
+  const setCaptain = (p, captain) => {
+    if (
+      captain == Captain.None ||
+      captain == Captain.Red ||
+      captain == Captain.Blue
+    ) {
+      players.value[p].captain = captain;
+    }
+  };
+
+  const isRedCaptain = () => {
+    const me = players.value[player.value];
+    return me ? me.captain == Captain.Red : false;
+  };
+
+  const isRedCaptainTaken = () => {
+    return Object.values(players.value).some((p) => p.captain == Captain.Red);
+  };
+
+  const isBlueCaptain = () => {
+    const me = players.value[player.value];
+    return me ? me.captain == Captain.Blue : false;
+  };
+
+  const isBlueCaptainTaken = () => {
+    return Object.values(players.value).some((p) => p.captain == Captain.Blue);
   };
 
   const isCaptainView = () => {
     const me = players.value[player.value];
-    return me ? me.captain : false;
+    return me ? me.captain != Captain.None : false;
   };
 
   const newGame = () => {
@@ -79,6 +108,10 @@ export const usePlayersStore = defineStore("players", () => {
     removePlayer,
     setPlayer,
     setCaptain,
+    isRedCaptain,
+    isRedCaptainTaken,
+    isBlueCaptain,
+    isBlueCaptainTaken,
     isCaptainView,
     newGame,
     $reset,

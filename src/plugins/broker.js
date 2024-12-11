@@ -56,7 +56,7 @@ class Broker {
       "enter",
       async ({ clientId: player }) => {
         console.debug(`broker: presence enter ${player}`);
-        this.playersStore.addPlayer(player, { isCaptain: false });
+        this.playersStore.addPlayer(player, { captain: 0 });
       },
     );
 
@@ -72,12 +72,9 @@ class Broker {
       console.debug(`broker: presence update ${JSON.stringify(msg)}`);
       const {
         clientId: player,
-        data: { isCaptain },
+        data: { captain },
       } = msg;
-      this.playersStore.setCaptain(player, isCaptain);
-      if (player == this.#username) {
-        this.gameStore.isCaptainView = isCaptain;
-      }
+      this.playersStore.setCaptain(player, captain);
     });
 
     this.#syncLeader = this.#username;
@@ -155,11 +152,10 @@ class Broker {
     this.channel.publish("nextGame", null);
   }
 
-  toggleCaptain(isCaptain) {
-    console.debug(`broker: send toggleCaptain ${isCaptain}`);
-    this.playersStore.setCaptain(this.#username, isCaptain);
-    this.gameStore.isCaptainView = isCaptain;
-    this.channel.presence.update({ isCaptain });
+  setCaptain(captain) {
+    console.debug(`broker: send setCaptain ${captain}`);
+    this.playersStore.setCaptain(this.#username, captain);
+    this.channel.presence.update({ captain });
   }
 
   async disconnect() {
