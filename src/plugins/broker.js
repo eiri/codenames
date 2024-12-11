@@ -18,7 +18,11 @@ class Broker {
   }
 
   async setClient() {
+    const username = localStorage.getItem("username");
     const password = localStorage.getItem("password");
+    if (username == null || password == null) {
+      throw new Error("Missing username or password");
+    }
     const decrypted = AES.decrypt(
       import.meta.env.VITE_KEY_CIPHERTEXT,
       password,
@@ -28,8 +32,9 @@ class Broker {
       throw new Error("Invalid API Key");
     }
 
-    this.#client = new Realtime(ablyAPIKey);
+    this.#client = new Realtime({ key: ablyAPIKey, clientId: username });
     await this.#client.connection.once("connected");
+    this.#username = username;
     console.log("broker: connected");
   }
 
@@ -37,18 +42,12 @@ class Broker {
     console.debug(`broker: connect`);
 
     const room = localStorage.getItem("room");
-
-    this.#syncLeader = null;
-    this.#username = localStorage.getItem("username");
-
-    if (this.#username == null || room == null) {
-      throw new Error("Missing username or room");
+    if (room == null) {
+      throw new Error("Missing room");
     }
 
-    this.#syncLeader = this.#username;
-    this.playersStore.setPlayer(this.#username);
-
     await this.setClient();
+    this.playersStore.setPlayer(this.#username);
 
     const channelName = `room:${room}`;
     this.channel = this.#client.channels.get(channelName);
@@ -57,7 +56,7 @@ class Broker {
       "enter",
       async ({ clientId: player }) => {
         console.debug(`broker: presence enter ${player}`);
-        this.playersStore.addPlayer(player, { isCaptain: false });
+        this.playersStore.addPlayer(player, { captain: 0 });
       },
     );
 
@@ -73,14 +72,12 @@ class Broker {
       console.debug(`broker: presence update ${JSON.stringify(msg)}`);
       const {
         clientId: player,
-        data: { isCaptain },
+        data: { captain },
       } = msg;
-      this.playersStore.setCaptain(player, isCaptain);
-      if (player == this.#username) {
-        this.gameStore.isCaptainView = isCaptain;
-      }
+      this.playersStore.setCaptain(player, captain);
     });
 
+    this.#syncLeader = this.#username;
     const members = await this.channel.presence.get();
     console.debug(`broker: sync members (${members.length})`);
     this.playersStore.$reset();
@@ -93,7 +90,7 @@ class Broker {
       }
     }
 
-    await this.channel.presence.enterClient(this.#username);
+    await this.channel.presence.enter();
 
     // callbacks
     await this.channel.subscribe("open", ({ data: idx }) => {
@@ -146,6 +143,7 @@ class Broker {
 
   open(idx) {
     console.debug(`broker: publish open ${idx}`);
+    this.gameStore.open(idx);
     this.channel.publish("open", idx);
   }
 
@@ -154,15 +152,16 @@ class Broker {
     this.channel.publish("nextGame", null);
   }
 
-  toggleCaptain(isCaptain) {
-    console.debug(`broker: send toggleCaptain ${isCaptain}`);
-    this.channel.presence.updateClient(this.#username, { isCaptain });
+  setCaptain(captain) {
+    console.debug(`broker: send setCaptain ${captain}`);
+    this.playersStore.setCaptain(this.#username, captain);
+    this.channel.presence.update({ captain });
   }
 
   async disconnect() {
     console.debug(`broker: disconnect`);
     await this.channel.presence.unsubscribe();
-    await this.channel.presence.leaveClient(this.#username);
+    await this.channel.presence.leave();
 
     await this.reqStateChannel.unsubscribe();
     await this.reqStateChannel.detach();

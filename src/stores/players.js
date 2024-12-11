@@ -6,20 +6,15 @@ export const usePlayersStore = defineStore("players", () => {
   const players = ref({});
 
   const regulars = reactive({
-    Eiri: {
-      name: "Eiri",
-      lj: "eiri",
-      avatar: "https://l-userpic.livejournal.com/38941189/689880", // https://l-userpic.livejournal.com/127274177/689880
-    },
     Akari: {
       name: "Akari",
       lj: "akari_chan",
       avatar: "https://l-userpic.livejournal.com/120407741/755293",
     },
-    Vitaliy: {
-      name: "Vitaliy",
-      lj: "seminarist",
-      avatar: "https://l-userpic.livejournal.com/45172718/788486",
+    Eiri: {
+      name: "Eiri",
+      lj: "eiri",
+      avatar: "https://l-userpic.livejournal.com/38941189/689880", // https://l-userpic.livejournal.com/127274177/689880
     },
     Ikadell: {
       name: "Ikadell",
@@ -31,6 +26,17 @@ export const usePlayersStore = defineStore("players", () => {
       lj: "next_friday",
       avatar: "https://l-userpic.livejournal.com/57379634/818233",
     },
+    Vitaliy: {
+      name: "Vitaliy",
+      lj: "seminarist",
+      avatar: "https://l-userpic.livejournal.com/45172718/788486",
+    },
+  });
+
+  const Captain = Object.freeze({
+    None: 0,
+    Red: 1,
+    Blue: 2,
   });
 
   const addPlayer = (p, data) => {
@@ -39,8 +45,7 @@ export const usePlayersStore = defineStore("players", () => {
       avatar: regulars[p]
         ? regulars[p].avatar
         : "http://placekitten.com/250/250",
-      captain: data ? data.isCaptain : false,
-      team: "white",
+      captain: Captain.None,
     };
   };
 
@@ -52,13 +57,37 @@ export const usePlayersStore = defineStore("players", () => {
     player.value = p;
   };
 
-  const setCaptain = (p, isCaptain) => {
-    players.value[p].captain = isCaptain;
+  const setCaptain = (p, captain) => {
+    if (
+      captain == Captain.None ||
+      captain == Captain.Red ||
+      captain == Captain.Blue
+    ) {
+      players.value[p].captain = captain;
+    }
+  };
+
+  const isRedCaptain = () => {
+    const me = players.value[player.value];
+    return me ? me.captain == Captain.Red : false;
+  };
+
+  const isRedCaptainTaken = () => {
+    return Object.values(players.value).some((p) => p.captain == Captain.Red);
+  };
+
+  const isBlueCaptain = () => {
+    const me = players.value[player.value];
+    return me ? me.captain == Captain.Blue : false;
+  };
+
+  const isBlueCaptainTaken = () => {
+    return Object.values(players.value).some((p) => p.captain == Captain.Blue);
   };
 
   const isCaptainView = () => {
     const me = players.value[player.value];
-    return me ? me.captain : false;
+    return me ? me.captain != Captain.None : false;
   };
 
   const newGame = () => {
@@ -79,6 +108,10 @@ export const usePlayersStore = defineStore("players", () => {
     removePlayer,
     setPlayer,
     setCaptain,
+    isRedCaptain,
+    isRedCaptainTaken,
+    isBlueCaptain,
+    isBlueCaptainTaken,
     isCaptainView,
     newGame,
     $reset,

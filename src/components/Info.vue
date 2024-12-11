@@ -43,15 +43,22 @@ const { players } = storeToRefs(playersStore);
             <div class="flex justify-end -space-x-1.5">
                 <div class="relative" v-for="player in players">
                     <img
-                        class="inline-block w-16 h-16 p-1 rounded-full ring-2 ring-gray-300 shadow-md bg-white"
-                        :class="{ 'ring-code-blue-700': player.captain }"
+                        class="inline-block w-16 h-16 p-1 rounded-full ring-2 shadow-md bg-white"
+                        :class="{
+                            'ring-gray-300': player.captain == 0,
+                            'ring-code-red-700': player.captain == 1,
+                            'ring-code-blue-700': player.captain == 2,
+                        }"
                         :src="player.avatar"
                         :alt="player.name"
                     />
                     <span
-                        v-show="player.captain"
+                        v-show="player.captain != 0"
                         class="absolute top-0 left-12 w-3.5 h-3.5 border-2 border-white rounded-full"
-                        :class="{ 'bg-code-blue-700 ': player.captain }"
+                        :class="{
+                            'bg-code-red-700': player.captain == 1,
+                            'bg-code-blue-700': player.captain == 2,
+                        }"
                     ></span>
                 </div>
             </div>
