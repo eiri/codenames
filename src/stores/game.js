@@ -104,6 +104,7 @@ export const useGameStore = defineStore("game", () => {
   };
 
   const $reset = () => {
+    deck = [];
     turn.value = 1;
     gameOver.value = "Loading...";
     board.value = [];
