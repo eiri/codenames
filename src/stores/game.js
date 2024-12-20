@@ -1,40 +1,69 @@
 import { ref, reactive, inject } from "vue";
 import { defineStore } from "pinia";
 
-import words from "@/assets/words.json";
+import allWords from "@/assets/words.json";
 import { CardState } from "@/assets/states";
 
+class Card {
+  constructor({ idx, word = "...", state = CardState.WhiteClosed }) {
+    this.idx = idx;
+    this.word = word;
+    this.state = state;
+  }
+  closed() {
+    return this.state % 2 == 1;
+  }
+}
+
 export const useGameStore = defineStore("game", () => {
-  const boardSize = 25;
-
   const rnd = inject("rnd");
+  const boardSize = 25;
+  // build round of cards based on board size
+  const red = Math.round((boardSize - 1) / 3);
+  const blue = red - 1;
+  const white = boardSize - red - blue - 1;
+  const round = [CardState.BlackClosed]
+    .concat(Array(red).fill(CardState.RedClosed))
+    .concat(Array(blue).fill(CardState.BlueClosed))
+    .concat(Array(white).fill(CardState.WhiteClosed));
+  let deck = [];
 
-  const gameKey = ref("");
-  const board = ref(
-    Array(boardSize)
-      .fill()
-      .map(() => {
-        return {
-          word: "",
-          state: CardState.WhiteOpened,
-          closed() {
-            return this.state % 2 == 1;
-          },
-        };
-      }),
-  );
+  const turn = ref(1);
+  const gameOver = ref("Loading...");
+  const board = ref([]);
   const score = reactive({
     red: Math.round((boardSize - 1) / 3),
     blue: Math.round((boardSize - 1) / 3) - 1,
   });
-  const gameOver = ref("");
+
+  const shuffle = (desk) => {
+    // Fisher-Yates shuffle
+    for (let i = desk.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd.next() * (i + 1));
+      [desk[i], desk[j]] = [desk[j], desk[i]];
+    }
+  };
+
+  const setSeed = (seed) => {
+    console.debug(`game store: seed rnd with ${seed}`);
+    rnd.mash(seed);
+    const dictionary = allWords.slice();
+    shuffle(dictionary);
+
+    for (let i = 0; i < dictionary.length; i += boardSize) {
+      const words = dictionary.slice(i, i + boardSize);
+      const cards = round.slice();
+      shuffle(cards);
+      for (let idx in cards) {
+        deck.push(new Card({ idx, word: words[idx], state: cards[idx] }));
+      }
+    }
+    buildGame(turn.value);
+  };
 
   const getState = () => {
-    if (gameKey.value == "") {
-      buildGame(null);
-    }
     return {
-      key: gameKey.value,
+      turn: turn.value,
       state: board.value.map((c) => c.state),
     };
   };
@@ -64,95 +93,30 @@ export const useGameStore = defineStore("game", () => {
     }
   };
 
-  const randomCards = (size) => {
-    const red = Math.round((size - 1) / 3);
-    const blue = red - 1;
-    const white = size - red - blue - 1;
-    let cards = [CardState.BlackClosed]
-      .concat(Array(red).fill(CardState.RedClosed))
-      .concat(Array(blue).fill(CardState.BlueClosed))
-      .concat(Array(white).fill(CardState.WhiteClosed));
-
-    // Fisher-Yates shuffle
-    for (let i = cards.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd.next() * (i + 1));
-      [cards[i], cards[j]] = [cards[j], cards[i]];
-    }
-
-    return cards;
-  };
-
-  const randomWord = () => {
-    const randomIndex = Math.floor(rnd.next() * words.length);
-    return words[randomIndex];
-  };
-
-  const randomWords = (size) => {
-    let words = {};
-    do {
-      words[randomWord()] = true;
-    } while (Object.keys(words).length < size);
-    return Object.keys(words);
-  };
-
-  const nextWord = () => {
-    let word = gameKey.value;
-    do {
-      word = randomWord();
-    } while (word == gameKey.value);
-    return word;
-  };
-
-  const buildGame = (key) => {
-    gameKey.value = key;
-    if (gameKey.value == null || gameKey.value == "") {
-      gameKey.value = nextWord();
-    }
-    console.debug(`buildGame for ${gameKey.value}`);
-    rnd.mash(gameKey.value);
-
-    const cards = randomCards(boardSize);
-    const words = randomWords(boardSize);
-
-    board.value = [];
-    for (let i in cards) {
-      board.value.push({
-        idx: i,
-        state: cards[i],
-        word: words[i],
-        closed() {
-          return this.state % 2 == 1;
-        },
-      });
-    }
+  const buildGame = (nextTurn) => {
+    turn.value = nextTurn;
+    const start = boardSize * (turn.value - 1);
+    const end = start + boardSize;
+    gameOver.value = "";
+    board.value = deck.slice(start, end);
     score.red = Math.round((boardSize - 1) / 3);
     score.blue = score.red - 1;
-    gameOver.value = "";
   };
 
   const $reset = () => {
-    gameKey.value = "";
-    board.value = Array(boardSize)
-      .fill()
-      .map(() => {
-        return {
-          word: "",
-          state: CardState.WhiteOpened,
-          closed() {
-            return this.state % 2 == 1;
-          },
-        };
-      });
+    turn.value = 1;
+    gameOver.value = "Loading...";
+    board.value = [];
     score.red = Math.round((boardSize - 1) / 3);
     score.blue = score.red - 1;
-    gameOver.value = "";
   };
 
   return {
-    gameKey,
+    turn,
     board,
     score,
     gameOver,
+    setSeed,
     getState,
     setState,
     open,

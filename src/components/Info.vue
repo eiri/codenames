@@ -7,7 +7,7 @@ import { usePlayersStore } from "@/stores/players";
 
 const room = ref(localStorage.getItem("room"));
 const store = useGameStore();
-const { gameKey } = storeToRefs(store);
+const { turn } = storeToRefs(store);
 
 const playersStore = usePlayersStore();
 const { players } = storeToRefs(playersStore);
@@ -38,7 +38,7 @@ const { players } = storeToRefs(playersStore);
                 />
             </svg>
         </div>
-        <div>{{ gameKey }}</div>
+        <div>{{ turn }}</div>
         <div class="flex-auto">
             <div class="flex justify-end -space-x-1.5">
                 <div class="relative" v-for="player in players">
