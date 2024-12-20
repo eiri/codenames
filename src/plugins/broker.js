@@ -9,6 +9,7 @@ class Broker {
   #client;
   #username;
   #syncLeader = null;
+  #seed = "0";
   constructor() {
     console.debug(`broker: init`);
     this.playersStore = usePlayersStore();
@@ -47,6 +48,13 @@ class Broker {
     }
 
     await this.setClient();
+    const now = new Date();
+    const seed =
+      now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, "0") +
+      now.getDate().toString().padStart(2, "0") +
+      room;
+    this.gameStore.setSeed(seed);
     this.playersStore.setPlayer(this.#username);
 
     const channelName = `room:${room}`;
@@ -98,13 +106,10 @@ class Broker {
       this.gameStore.open(idx);
     });
 
-    // FIXME: it is possible to get same board in a single session
-    // so better is to keep fixed sized table of unique words
-    // to make sure there are at least N unique boards
     await this.channel.subscribe("nextGame", () => {
       console.debug(`broker: received nextGame as ${this.#username}`);
       this.playersStore.newGame();
-      this.gameStore.buildGame(null);
+      this.gameStore.buildGame(this.gameStore.turn + 1);
     });
 
     // sync state
@@ -121,9 +126,11 @@ class Broker {
     await this.reqStateChannel.subscribe(onReqState);
 
     // receive once
-    const onAckState = ({ data: { key, state } }) => {
-      console.debug(`broker: received ackState with key ${key} state ${state}`);
-      this.gameStore.buildGame(key);
+    const onAckState = ({ data: { turn, state } }) => {
+      console.debug(
+        `broker: received ackState for turn ${turn} state ${state}`,
+      );
+      this.gameStore.buildGame(turn);
       this.gameStore.setState(state);
       this.channel.unsubscribe("ackState");
     };
