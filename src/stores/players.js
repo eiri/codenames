@@ -39,7 +39,11 @@ export const usePlayersStore = defineStore("players", () => {
     Blue: 2,
   });
 
-  const addPlayer = (p, { captain } = data) => {
+  const addPlayer = (p, data) => {
+    let captain = 0;
+    if (data && data.captain) {
+      captain = data.aptain;
+    }
     players.value[p] = {
       name: p,
       avatar: regulars[p]
