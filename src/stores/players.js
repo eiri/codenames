@@ -40,9 +40,9 @@ export const usePlayersStore = defineStore("players", () => {
   });
 
   const addPlayer = (p, data) => {
-    let captain = 0;
+    let captain = Captain.None;
     if (data && data.captain) {
-      captain = data.aptain;
+      captain = data.captain;
     }
     players.value[p] = {
       name: p,
