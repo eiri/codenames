@@ -52,7 +52,7 @@ const cardClass = computed(() => {
 
 /* black-closed */
 .card-1 {
-    @apply text-zinc-900 bg-zinc-950/20;
+    @apply text-white bg-zinc-950/50;
 }
 
 /* white-open */
