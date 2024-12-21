@@ -15,7 +15,7 @@ const open = (idx) => {
 </script>
 
 <template>
-    <div class="relative h-[70vh]">
+    <div class="relative h-[63vh]">
         <div class="h-full w-full grid grid-cols-5 gap-12">
             <Card
                 v-for="(card, i) in board"
