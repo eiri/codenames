@@ -7,7 +7,7 @@ import { usePlayersStore } from "@/stores/players";
 
 const room = ref(localStorage.getItem("room"));
 const store = useGameStore();
-const { turn } = storeToRefs(store);
+const { turn, score, gameOver } = storeToRefs(store);
 
 const playersStore = usePlayersStore();
 const { players } = storeToRefs(playersStore);
@@ -39,6 +39,26 @@ const { players } = storeToRefs(playersStore);
             </svg>
         </div>
         <div>{{ turn }}</div>
+        <div class="pl-3" v-if="gameOver">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-8 h-8 fill-teal-700"
+                viewBox="0 0 512 512"
+            >
+                <path
+                    d="M256 25c-11.594 0-23 12.8-23 31s11.406 31 23 31s23-12.8 23-31s-11.406-31-23-31m-103.951 2.975l-16.098 8.05c15.092 30.185 51.37 56.81 82.188 74.442L232.334 295H247V192h18v103h14.666l14.195-184.533c30.818-17.632 67.096-44.257 82.188-74.442l-16.098-8.05c-19.91 29.9-44.891 49.148-71.334 57.77C281.311 97.28 269.75 105 256 105s-25.31-7.72-32.617-19.256c-26.443-8.62-51.424-27.87-71.334-57.77zM169 313v96H25v78h462v-30H343V313z"
+                />
+            </svg>
+        </div>
+        <div
+            :class="{
+                'text-black': score.red != 0 && score.blue != 0,
+                'text-code-red-700': score.red == 0,
+                'text-code-blue-700': score.blue == 0,
+            }"
+        >
+            {{ gameOver }}
+        </div>
         <div class="flex-auto">
             <div class="flex justify-end -space-x-1.5">
                 <div class="relative" v-for="player in players">
