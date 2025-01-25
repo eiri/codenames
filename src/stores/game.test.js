@@ -18,9 +18,9 @@ describe("Game Store", () => {
     store.setSeed("20241212212");
   });
 
-  it("Doesn't repeat words for 45 turns", () => {
+  it("Doesn't repeat words for 46 turns", () => {
     let seen = [];
-    for (let turn = 1; turn <= 45; turn++) {
+    for (let turn = 1; turn <= 46; turn++) {
       store.buildGame(turn);
       for (const card of store.board) {
         expect(seen).not.toContain(card.word);
