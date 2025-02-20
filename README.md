@@ -14,7 +14,7 @@ Just a quick hobby project for me and my friends.
 
 Call `git clone` and then `npm install` to get the deps. The build tool is [Vite](https://vitejs.dev/), but before building the app it needs a couple of env var to be added in `.env`.
 
-For multiplayer support the game needs an API key to talk to Ably servers and been a web app that means that the key will be exposed through js source code. One way to go about it would be to use Netlify or Cloudfare functions to init the Ably client, but I went with another method and encrypted the key with AES-CBC, so it's all static and there is a shared secret between players that allows to decrypt the key on login.
+For multiplayer support the game needs an API key to talk to Ably servers and been a web app that means that the key will be exposed through JS source code. One way to go about it would be to use Netlify or Cloudflare functions to initialize the Ably client, but I went with another method and encrypted the key with AES-CBC, so it's all static and there is a shared secret between players that allows to decrypt the key on login.
 
 To get the encryption's ciphertext and secret's checksum for a build set API key in `.env` file as `ABLY_API_KEY` and secret as `SECRET` and then run `npm run encrypt`.
 
@@ -35,17 +35,17 @@ Copy and paste the last two lines into `.env` file and run `npm run build`. Vite
 
 Pretty easy deployment to [Netlify](https://app.netlify.com), to be honest. Start a new site, link the repo, agree to all correctly guessed commands, add env vars and wait for deployment to finish. Then, optionally, change site name to something more catchy, discovering in the process that all the catchy names have already been taken.
 
-The only gotcha is that it seems that the first deployment kicks in before env vars got set, so they haven't been picked up by Vite. However no changes re-deployment did the trick.
+The only gotcha is that it seems that the first deployment kicks in before env vars got set, so they haven't been picked up by Vite. However, no changes re-deployment did the trick.
 
-All and all Netlify, as always, is a pleasure to work with, hugely intuitive and overall just amazing.
+All in all Netlify, as always, is a pleasure to work with, hugely intuitive and overall just amazing.
 
 ## Development
 
-Run `npm run dev` and open the app on http://localhost:5173 It's actually runs on `0.0.0.0`, to test on iPad and it runs against real Ably account, because
+Run `npm run dev` and open the app on http://localhost:5173 It actually runs on `0.0.0.0`, to test on iPad, and it runs against real Ably account, because
 
 ![I don't always test my code, but when I do I, I do it in production.](i_dont_always_test_my_code.jpg)
 
-There are no tests whatsoever, no Vitest, no Cypress, nothing, sorry. It's a hobby project from someone who doesn't do frontend (or much node really) and I don't have desire to learn another testing framework in unknown language.
+There are not many tests, it's a hobby project, after all.
 
 ## License
 
