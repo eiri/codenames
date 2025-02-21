@@ -75,7 +75,7 @@ onMounted(() => {
         class="flex w-full h-screen items-center justify-center bg-cyan-800 bg-login bg-cover bg-no-repeat"
     >
         <div
-            class="rounded-xl bg-cyan-800 bg-opacity-50 px-16 py-10 shadow-lg backdrop-blur-md max-sm:px-8 text-white font-sans"
+            class="rounded-xl bg-cyan-800/50 px-16 py-10 shadow-lg backdrop-blur-md max-sm:px-8 text-white font-sans"
         >
             <div class="flex flex-col items-center justify-center mb-6">
                 <svg
@@ -95,10 +95,10 @@ onMounted(() => {
                     {{ error }}
                 </h2>
             </div>
-            <div
-                class="flex flex-col space-y-6 divide-y divide-zinc-300 divide-solid"
-            >
-                <div class="flex items-center justify-center space-x-4">
+            <div class="flex flex-col divide-y divide-zinc-300 divide-solid">
+                <div
+                    class="flex items-center justify-center space-x-4 space-y-4"
+                >
                     <img
                         class="avatar ring-zinc-400"
                         :class="{
@@ -111,7 +111,7 @@ onMounted(() => {
                         @click="setUser(user)"
                     />
                     <div
-                        class="avatar ring-zinc-400 text-6xl text-center bg-cyan-500 bg-opacity-50 bg-gradient-to-br from-transparent to-cyan-300"
+                        class="avatar mb-4 ring-zinc-400 text-6xl text-center bg-cyan-500/50 bg-linear-to-br from-transparent to-cyan-300"
                         @click="setUser('new')"
                     >
                         +
@@ -154,7 +154,7 @@ onMounted(() => {
 
                     <div class="pt-3 flex items-center justify-center">
                         <button
-                            class="rounded-xl bg-cyan-500 bg-opacity-50 px-10 py-2 text-white shadow-xl shadow-cyan-800/50 backdrop-blur-md transition-colors duration-300 hover:bg-cyan-600 active:scale-[.97]"
+                            class="rounded-xl bg-cyan-500/50 px-10 py-2 text-white shadow-xl shadow-cyan-800/50 backdrop-blur-md transition-colors duration-300 hover:bg-cyan-600 active:scale-[.97]"
                             role="button"
                         >
                             Enter
@@ -167,8 +167,10 @@ onMounted(() => {
 </template>
 
 <style lang="postcss" scoped>
+@reference "./assets/index.css";
+
 .input {
-    @apply rounded-2xl border-none bg-cyan-200 bg-opacity-50 px-6 py-2 text-inherit placeholder-zinc-300 shadow-inner shadow-cyan-700/50 outline-none backdrop-blur-md;
+    @apply rounded-2xl border-none bg-cyan-200/50 px-6 py-2 text-inherit placeholder-zinc-300 shadow-inner shadow-cyan-700/50 outline-hidden backdrop-blur-md;
 }
 .avatar {
     @apply cursor-pointer w-16 h-16 p-1 rounded-full ring-2 hover:ring-zinc-200 shadow-md;

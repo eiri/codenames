@@ -45,6 +45,8 @@ const cardClass = computed(() => {
 </template>
 
 <style lang="postcss" scoped>
+@reference "../assets/index.css";
+
 /* black-open */
 .card-0 {
     @apply text-white bg-zinc-950;
