@@ -24,7 +24,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.6",
     "@tailwindcss/vite": "^4.1.6",
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@vitejs/plugin-vue": "^5.2.4",
     "dotenv": "^16.5.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.3",
