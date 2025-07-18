@@ -1,7 +1,9 @@
 import { ref, reactive } from "vue";
+import { useRouter } from "vue-router";
 import { defineStore } from "pinia";
 
 export const usePlayersStore = defineStore("players", () => {
+  const router = useRouter();
   const player = ref("");
   const players = ref({});
 
@@ -100,6 +102,10 @@ export const usePlayersStore = defineStore("players", () => {
     }
   };
 
+  const logout = () => {
+    router.push("/");
+  };
+
   const $reset = () => {
     player.value = "";
     players.value = {};
@@ -118,6 +124,7 @@ export const usePlayersStore = defineStore("players", () => {
     isBlueCaptainTaken,
     isCaptainView,
     newGame,
+    logout,
     $reset,
   };
 });
