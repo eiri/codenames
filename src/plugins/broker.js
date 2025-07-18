@@ -9,7 +9,6 @@ class Broker {
   #client;
   #username;
   #syncLeader = null;
-  #seed = "0";
   constructor() {
     console.debug(`broker: init`);
     this.playersStore = usePlayersStore();
@@ -112,6 +111,11 @@ class Broker {
       this.gameStore.buildGame(this.gameStore.turn + 1);
     });
 
+    await this.channel.subscribe("globalLogout", () => {
+      console.debug(`broker: received globalLogout as ${this.#username}`);
+      this.playersStore.logout();
+    });
+
     // sync state
     this.reqStateChannel = this.#client.channels.getDerived(channelName, {
       filter:
@@ -163,6 +167,11 @@ class Broker {
     console.debug(`broker: send setCaptain ${captain}`);
     this.playersStore.setCaptain(this.#username, captain);
     this.channel.presence.update({ captain });
+  }
+
+  globalLogout() {
+    console.debug("broker: send globalLogout");
+    this.channel.publish("globalLogout", null);
   }
 
   async disconnect() {
