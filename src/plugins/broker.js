@@ -113,6 +113,7 @@ class Broker {
 
     await this.channel.subscribe("globalLogout", () => {
       console.debug(`broker: received globalLogout as ${this.#username}`);
+      this.disconnect();
       this.playersStore.logout();
     });
 
