@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "ably": "^2.5.0",
-    "crypto-es": "^2.0.2",
+    "crypto-es": "^3.0.0",
     "esm-seedrandom": "^3.0.5",
     "pinia": "^3.0.3",
     "vue": "^3.5.18",
