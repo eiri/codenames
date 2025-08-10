@@ -1,5 +1,4 @@
-import { AES } from "crypto-es/lib/aes";
-import { Utf8 } from "crypto-es/lib/core";
+import { AES, Utf8 } from "crypto-es";
 import { Realtime } from "ably";
 
 import { useGameStore } from "@/stores/game";
