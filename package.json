@@ -11,13 +11,14 @@
     "dev-test": "vitest --reporter=basic --disable-console-intercept",
     "preview": "vite preview",
     "convert": "node ./assets/convert.js ./assets/ACB_codenames.txt ./src/assets/words.json",
-    "encrypt": "node ./assets/encrypt.mjs"
+    "encrypt": "node --import=specifier-resolution-node/register ./assets/encrypt.js"
   },
   "dependencies": {
     "ably": "^2.5.0",
     "crypto-es": "^3.0.0",
     "esm-seedrandom": "^3.0.5",
     "pinia": "^3.0.3",
+    "specifier-resolution-node": "^1.1.4",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
   },

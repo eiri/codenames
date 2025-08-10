@@ -1,5 +1,5 @@
 <script setup>
-import { SHA256 } from "crypto-es/lib/sha256";
+import { SHA256 } from "crypto-es";
 
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
