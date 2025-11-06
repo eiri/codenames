@@ -23,8 +23,8 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.16",
-    "@tailwindcss/vite": "^4.1.16",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/vite": "^4.1.17",
     "@vitejs/plugin-vue": "^6.0.1",
     "dotenv": "^17.2.3",
     "jsdom": "^27.1.0",
