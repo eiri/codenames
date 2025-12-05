@@ -80,6 +80,7 @@ const { players } = storeToRefs(playersStore);
                             'ring-gray-300': player.captain == 0,
                             'ring-code-red-700': player.captain == 1,
                             'ring-code-blue-700': player.captain == 2,
+                            'opacity-25': !player.online,
                         }"
                         :src="player.avatar"
                         :alt="player.name"

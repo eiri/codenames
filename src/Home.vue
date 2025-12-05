@@ -9,7 +9,7 @@ import { usePlayersStore } from "@/stores/players.js";
 
 const router = useRouter();
 
-const { regulars } = storeToRefs(usePlayersStore());
+const { players } = storeToRefs(usePlayersStore());
 
 const showForm = ref(false);
 const rPwd = ref(null);
@@ -96,26 +96,18 @@ onMounted(() => {
                 </h2>
             </div>
             <div class="flex flex-col divide-y divide-zinc-300 divide-solid">
-                <div
-                    class="flex items-center justify-center space-x-4 space-y-4"
-                >
+                <div class="flex items-center justify-center">
                     <img
-                        class="avatar ring-zinc-400"
+                        class="avatar ring-zinc-400 mr-3 mb-3"
                         :class="{
-                            'ring-zinc-200': username == user.name,
+                            'ring-zinc-200': username == player.name,
                         }"
-                        v-for="user in regulars"
-                        :key="user"
-                        :src="user.avatar"
-                        :alt="user.name"
-                        @click="setUser(user)"
+                        v-for="player in players"
+                        :key="player"
+                        :src="player.avatar"
+                        :alt="player.name"
+                        @click="setUser(player)"
                     />
-                    <div
-                        class="avatar mb-4 ring-zinc-400 text-6xl text-center bg-cyan-500/50 bg-linear-to-br from-transparent to-cyan-300"
-                        @click="setUser('new')"
-                    >
-                        +
-                    </div>
                 </div>
 
                 <form
