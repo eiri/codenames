@@ -1,4 +1,4 @@
-import { ref, reactive, inject } from "vue";
+import { ref, inject, computed } from "vue";
 import { defineStore } from "pinia";
 
 import allWords from "@/assets/words.json";
@@ -29,11 +29,32 @@ export const useGameStore = defineStore("game", () => {
   let deck = [];
 
   const turn = ref(1);
-  const gameOver = ref("Loading...");
   const board = ref([]);
-  const score = reactive({
-    red: Math.round((boardSize - 1) / 3),
-    blue: Math.round((boardSize - 1) / 3) - 1,
+
+  const redScore = computed(() => {
+    const count = Math.round((boardSize - 1) / 3);
+    const done = board.value.reduce((acc, cur) => {
+      if (cur.state == CardState.RedOpened) acc -= 1;
+      return acc;
+    }, count);
+    return done;
+  });
+
+  const blueScore = computed(() => {
+    const count = Math.round((boardSize - 1) / 3) - 1;
+    const done = board.value.reduce((acc, cur) => {
+      if (cur.state == CardState.BlueOpened) acc -= 1;
+      return acc;
+    }, count);
+    return done;
+  });
+
+  const gameOver = computed(() => {
+    if (board.value.some((cur) => cur.state == CardState.BlackOpened))
+      return "Both teams lost";
+    if (redScore.value == 0) return "Red team won";
+    if (blueScore.value == 0) return "Blue team won";
+    return "";
   });
 
   const shuffle = (desk) => {
@@ -45,7 +66,6 @@ export const useGameStore = defineStore("game", () => {
   };
 
   const setSeed = (seed) => {
-    console.debug(`game store: seed rnd with ${seed}`);
     rnd.mash(seed);
     const dictionary = allWords.slice();
     shuffle(dictionary);
@@ -75,21 +95,6 @@ export const useGameStore = defineStore("game", () => {
   const open = (idx) => {
     if (board.value[idx] && board.value[idx].closed()) {
       board.value[idx].state -= 1;
-      if (board.value[idx].state == CardState.RedOpened) {
-        score.red -= 1;
-        if (score.red == 0) {
-          gameOver.value = "Red team won";
-        }
-      }
-      if (board.value[idx].state == CardState.BlueOpened) {
-        score.blue -= 1;
-        if (score.blue == 0) {
-          gameOver.value = "Blue team won";
-        }
-      }
-      if (board.value[idx].state == CardState.BlackOpened) {
-        gameOver.value = "Both teams lost";
-      }
     }
   };
 
@@ -97,25 +102,20 @@ export const useGameStore = defineStore("game", () => {
     turn.value = nextTurn;
     const start = boardSize * (turn.value - 1);
     const end = start + boardSize;
-    gameOver.value = "";
     board.value = deck.slice(start, end);
-    score.red = Math.round((boardSize - 1) / 3);
-    score.blue = score.red - 1;
   };
 
   const $reset = () => {
     deck = [];
     turn.value = 1;
-    gameOver.value = "Loading...";
     board.value = [];
-    score.red = Math.round((boardSize - 1) / 3);
-    score.blue = score.red - 1;
   };
 
   return {
     turn,
     board,
-    score,
+    redScore,
+    blueScore,
     gameOver,
     setSeed,
     getState,

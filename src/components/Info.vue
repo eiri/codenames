@@ -8,7 +8,7 @@ import { usePlayersStore } from "@/stores/players";
 
 const room = ref(localStorage.getItem("room"));
 const store = useGameStore();
-const { turn, score, gameOver } = storeToRefs(store);
+const { turn, redScore, blueScore, gameOver } = storeToRefs(store);
 
 const playersStore = usePlayersStore();
 const { players } = storeToRefs(playersStore);
@@ -64,9 +64,9 @@ const { players } = storeToRefs(playersStore);
         </div>
         <div
             :class="{
-                'text-black': score.red != 0 && score.blue != 0,
-                'text-code-red-700': score.red == 0,
-                'text-code-blue-700': score.blue == 0,
+                'text-black': redScore != 0 && blueScore != 0,
+                'text-code-red-700': redScore == 0,
+                'text-code-blue-700': blueScore == 0,
             }"
         >
             {{ gameOver }}

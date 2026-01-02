@@ -1,4 +1,4 @@
-import { beforeAll, it, describe, expect } from "vitest";
+import { beforeAll, beforeEach, it, describe, expect } from "vitest";
 import { createApp } from "vue";
 import { setActivePinia, createPinia, storeToRefs } from "pinia";
 import rnd from "@/plugins/rnd";
@@ -15,6 +15,10 @@ describe("Game Store", () => {
     app.use(pinia);
     setActivePinia(pinia);
     store = useGameStore();
+  });
+
+  beforeEach(() => {
+    store.$reset();
     store.setSeed("20241212212");
   });
 
@@ -62,5 +66,54 @@ describe("Game Store", () => {
         expect(board.value[i]).toEqual(dictionary[j]);
       }
     });
+  });
+
+  it("Counts score correctly", () => {
+    const { redScore, blueScore } = storeToRefs(store);
+    // black 20
+    // reds  4 5 8 11 14 16 21 23
+    // blues 3 6 7 9 15 19 24
+    store.buildGame(1);
+    expect(redScore.value).toEqual(8);
+    expect(blueScore.value).toEqual(7);
+    // open whites
+    [0, 1, 2, 10].forEach((i) => store.open(i));
+    expect(redScore.value).toEqual(8);
+    expect(blueScore.value).toEqual(7);
+    // open reds
+    [4, 5, 8, 11].forEach((i) => store.open(i));
+    // open blues
+    [3, 6, 7].forEach((i) => store.open(i));
+    expect(redScore.value).toEqual(4);
+    expect(blueScore.value).toEqual(4);
+    // open all reds
+    [14, 16, 21, 23].forEach((i) => store.open(i));
+    expect(redScore.value).toEqual(0);
+    expect(blueScore.value).toEqual(4);
+    // open all blues
+    [9, 15, 19, 24].forEach((i) => store.open(i));
+    expect(redScore.value).toEqual(0);
+    expect(blueScore.value).toEqual(0);
+  });
+
+  it("Opens game over correctly", () => {
+    const { gameOver } = storeToRefs(store);
+
+    const cases = [
+      { expected: "Both teams lost", cards: [20] },
+      { expected: "Red team won", cards: [4, 5, 8, 11, 14, 16, 21, 23] },
+      { expected: "Blue team won", cards: [3, 6, 7, 9, 15, 19, 24] },
+    ];
+
+    for (const { expected, cards } of cases) {
+      store.$reset();
+      store.setSeed("20241212212");
+      store.buildGame(1);
+
+      expect(gameOver.value).toBe("");
+
+      cards.forEach((i) => store.open(i));
+      expect(gameOver.value).toBe(expected);
+    }
   });
 });
