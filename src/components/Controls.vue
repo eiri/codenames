@@ -7,7 +7,7 @@ import { useGameStore } from "@/stores/game.js";
 import { usePlayersStore } from "@/stores/players.js";
 
 const broker = inject("broker");
-const { score } = storeToRefs(useGameStore());
+const { redScore, blueScore } = storeToRefs(useGameStore());
 const { isRedCaptain, isRedCaptainTaken, isBlueCaptain, isBlueCaptainTaken } =
     usePlayersStore();
 
@@ -31,7 +31,7 @@ const toggleBlueCaptain = () => {
             />
         </div>
         <div class="flex justify-center text-code-red-700">
-            {{ score.red }}
+            {{ redScore }}
         </div>
         <div class="flex justify-center">
             <button
@@ -42,7 +42,7 @@ const toggleBlueCaptain = () => {
             </button>
         </div>
         <div class="flex justify-center text-code-blue-700">
-            {{ score.blue }}
+            {{ blueScore }}
         </div>
         <div class="flex justify-center">
             <Toggle
