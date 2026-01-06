@@ -2,7 +2,7 @@ import { AES, Utf8 } from "crypto-es";
 import { Realtime } from "ably";
 
 import { useGameStore } from "@/stores/game";
-import { usePlayersStore } from "@/stores/players";
+import { Captain, usePlayersStore } from "@/stores/players";
 
 class Broker {
   #client;
@@ -62,7 +62,7 @@ class Broker {
       "enter",
       async ({ clientId: player }) => {
         console.debug(`broker: presence enter ${player}`);
-        this.playersStore.addPlayer(player, { captain: 0 });
+        this.playersStore.addPlayer(player, Captain.None);
       },
     );
 
@@ -89,8 +89,11 @@ class Broker {
     this.playersStore.$reset();
     this.playersStore.setPlayer(this.#username);
     for (let i in members) {
-      const { clientId: player, data } = members[i];
-      this.playersStore.addPlayer(player, data);
+      const {
+        clientId: player,
+        data: { captain } = { captain: Captain.None },
+      } = members[i];
+      this.playersStore.addPlayer(player, captain);
       if (player != this.#username) {
         this.#syncLeader = player;
       }
@@ -155,7 +158,7 @@ class Broker {
   open(idx) {
     console.debug(`broker: publish open ${idx}`);
     this.gameStore.open(idx);
-    this.channel.publish("open", idx);
+    this.channel.publish("open", { idx });
   }
 
   nextGame() {

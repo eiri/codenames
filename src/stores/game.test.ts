@@ -3,11 +3,13 @@ import { createApp } from "vue";
 import { setActivePinia, createPinia, storeToRefs } from "pinia";
 import rnd from "@/plugins/rnd";
 import dictionary from "@/assets/words.json";
-import { useGameStore } from "@/stores/game.js";
+import { useGameStore } from "@/stores/game";
+
+type GameStore = ReturnType<typeof useGameStore>;
 
 describe("Game Store", () => {
   const app = createApp({});
-  let store;
+  let store: GameStore;
 
   beforeAll(() => {
     const pinia = createPinia();
@@ -61,7 +63,7 @@ describe("Game Store", () => {
     testTable.forEach((test) => {
       store.buildGame(test.turn);
       expect(board.value).toHaveLength(test.expect.length);
-      for (let i = 0; i < board.length; i++) {
+      for (let i = 0; i < board.value.length; i++) {
         const j = test.expect[i];
         expect(board.value[i]).toEqual(dictionary[j]);
       }

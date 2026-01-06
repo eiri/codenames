@@ -2,17 +2,25 @@ import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { defineStore } from "pinia";
 
+export enum Captain {
+  None = 0,
+  Red = 1,
+  Blue = 2,
+}
+
+interface Player {
+  name: string;
+  lj: string;
+  avatar: string;
+  captain: Captain;
+  online: boolean;
+}
+
 export const usePlayersStore = defineStore("players", () => {
   const router = useRouter();
   const player = ref("");
 
-  const Captain = Object.freeze({
-    None: 0,
-    Red: 1,
-    Blue: 2,
-  });
-
-  const players = reactive({
+  const players = reactive<Record<string, Player>>({
     Akari: {
       name: "Akari",
       lj: "akari_chan",
@@ -50,25 +58,21 @@ export const usePlayersStore = defineStore("players", () => {
     },
   });
 
-  const addPlayer = (p, data) => {
-    let captain = Captain.None;
-    if (data && data.captain) {
-      captain = data.captain;
-    }
+  const addPlayer = (p: string, captain: Captain) => {
     players[p].captain = captain;
     players[p].online = true;
   };
 
-  const removePlayer = (p) => {
+  const removePlayer = (p: string) => {
     players[p].captain = Captain.None;
     players[p].online = false;
   };
 
-  const setPlayer = (p) => {
+  const setPlayer = (p: string) => {
     player.value = p;
   };
 
-  const setCaptain = (p, captain) => {
+  const setCaptain = (p: string, captain: Captain) => {
     if (
       captain == Captain.None ||
       captain == Captain.Red ||
