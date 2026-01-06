@@ -25,7 +25,7 @@ describe("Game Store", () => {
   });
 
   it("Doesn't repeat words for 46 turns", () => {
-    let seen = [];
+    const seen = [];
     for (let turn = 1; turn <= 46; turn++) {
       store.buildGame(turn);
       for (const card of store.board) {

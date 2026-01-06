@@ -1,7 +1,7 @@
 import { ref, inject, computed } from "vue";
 import { defineStore } from "pinia";
 
-import { Rnd } from "@/plugins/rnd";
+import { rndKey, Rnd } from "@/plugins/rnd";
 import allWords from "@/assets/words.json";
 
 export enum CardState {
@@ -42,7 +42,7 @@ export class Card {
 }
 
 export const useGameStore = defineStore("game", () => {
-  const rnd = inject<Rnd>("rnd");
+  const rnd = inject<Rnd>(rndKey);
   const boardSize = 25;
   // build round of cards based on board size
   const red = Math.round((boardSize - 1) / 3);

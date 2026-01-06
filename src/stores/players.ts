@@ -8,7 +8,7 @@ export enum Captain {
   Blue = 2,
 }
 
-interface Player {
+export interface Player {
   name: string;
   lj: string;
   avatar: string;

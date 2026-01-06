@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 const props = defineProps({
     team: {
         type: String,
@@ -58,7 +58,7 @@ const props = defineProps({
                 'bg-zinc-400': !props.disabled,
                 'after:border-zinc-400': !props.disabled,
             }"
-            class="relative w-14 h-7 rounded-full peer peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all"
+            class="relative w-14 h-7 rounded-full peer peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-1 after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all"
         ></div>
     </label>
 </template>

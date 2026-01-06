@@ -5,6 +5,7 @@
     "checkJs": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
+    "isolatedModules": true,
     "module": "esnext",
     "moduleResolution": "node",
     "noEmit": true,

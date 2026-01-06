@@ -1,5 +1,7 @@
-import { App } from "vue";
+import { App, InjectionKey } from "vue";
 import prng_alea from "esm-seedrandom/esm/alea";
+
+export const rndKey: InjectionKey<Rnd> = Symbol("rnd");
 
 export const uuidv4 = (): string => {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
@@ -28,6 +30,6 @@ export default {
   install(app: App) {
     const uuid = uuidv4();
     const rnd = new Rnd(uuid);
-    app.provide("rnd", rnd);
+    app.provide(rndKey, rnd);
   },
 };

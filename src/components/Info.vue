@@ -1,10 +1,12 @@
-<script setup>
+<script setup lang="ts">
 import { ref, inject } from "vue";
 import { storeToRefs } from "pinia";
 
-const broker = inject("broker");
 import { useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
+import { brokerKey, Broker } from "@/plugins/broker";
+
+const broker = inject<Broker>(brokerKey);
 
 const room = ref(localStorage.getItem("room"));
 const store = useGameStore();
@@ -73,7 +75,11 @@ const { players } = storeToRefs(playersStore);
         </div>
         <div class="flex-auto">
             <div class="flex justify-end -space-x-1.5">
-                <div class="relative" v-for="player in players">
+                <div
+                    class="relative"
+                    v-bind:key="player.name"
+                    v-for="player in players"
+                >
                     <img
                         class="inline-block w-16 h-16 p-1 rounded-full ring-2 shadow-md bg-white"
                         :class="{

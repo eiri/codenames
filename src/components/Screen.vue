@@ -1,15 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { inject } from "vue";
 import { storeToRefs } from "pinia";
 
-const broker = inject("broker");
-import { useGameStore } from "@/stores/game.js";
-import { usePlayersStore } from "@/stores/players.js";
 import Card from "@/components/Card.vue";
+import { useGameStore } from "@/stores/game";
+import { usePlayersStore } from "@/stores/players";
+import { brokerKey, Broker } from "@/plugins/broker";
+
+const broker = inject<Broker>(brokerKey);
 
 const { board } = storeToRefs(useGameStore());
 const { isCaptainView } = usePlayersStore();
-const open = (idx) => {
+const open = (idx: number) => {
     broker.open(idx);
 };
 </script>
