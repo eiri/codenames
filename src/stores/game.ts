@@ -1,22 +1,48 @@
 import { ref, inject, computed } from "vue";
 import { defineStore } from "pinia";
 
+import { rndKey, Rnd } from "@/plugins/rnd";
 import allWords from "@/assets/words.json";
-import { CardState } from "@/assets/states";
 
-class Card {
-  constructor({ idx, word = "...", state = CardState.WhiteClosed }) {
+export enum CardState {
+  BlackOpened = 0,
+  BlackClosed = 1,
+  WhiteOpened = 2,
+  WhiteClosed = 3,
+  RedOpened = 4,
+  RedClosed = 5,
+  BlueOpened = 6,
+  BlueClosed = 7,
+}
+
+interface CardOptions {
+  idx: number;
+  word?: string;
+  state?: CardState;
+}
+
+export class Card {
+  idx: number;
+  word: string;
+  state: CardState;
+
+  constructor({
+    idx,
+    word = "...",
+    state = CardState.WhiteClosed,
+  }: CardOptions) {
     this.idx = idx;
     this.word = word;
     this.state = state;
   }
+
   closed() {
     return this.state % 2 == 1;
   }
 }
 
 export const useGameStore = defineStore("game", () => {
-  const rnd = inject("rnd");
+  const rnd = inject<Rnd>(rndKey);
   const boardSize = 25;
   // build round of cards based on board size
   const red = Math.round((boardSize - 1) / 3);
@@ -26,10 +52,10 @@ export const useGameStore = defineStore("game", () => {
     .concat(Array(red).fill(CardState.RedClosed))
     .concat(Array(blue).fill(CardState.BlueClosed))
     .concat(Array(white).fill(CardState.WhiteClosed));
-  let deck = [];
+  let deck: Card[] = [];
 
   const turn = ref(1);
-  const board = ref([]);
+  const board = ref<Card[]>([]);
 
   const redScore = computed(() => {
     const count = Math.round((boardSize - 1) / 3);
@@ -57,7 +83,7 @@ export const useGameStore = defineStore("game", () => {
     return "";
   });
 
-  const shuffle = (desk) => {
+  const shuffle = (desk: (string | CardState)[]) => {
     // Fisher-Yates shuffle
     for (let i = desk.length - 1; i > 0; i--) {
       const j = Math.floor(rnd.next() * (i + 1));
@@ -65,7 +91,7 @@ export const useGameStore = defineStore("game", () => {
     }
   };
 
-  const setSeed = (seed) => {
+  const setSeed = (seed: string) => {
     rnd.mash(seed);
     const dictionary = allWords.slice();
     shuffle(dictionary);
@@ -74,10 +100,11 @@ export const useGameStore = defineStore("game", () => {
       const words = dictionary.slice(i, i + boardSize);
       const cards = round.slice();
       shuffle(cards);
-      for (let idx in cards) {
+      for (const idx of cards.keys()) {
         deck.push(new Card({ idx, word: words[idx], state: cards[idx] }));
       }
     }
+
     buildGame(turn.value);
   };
 
@@ -88,17 +115,17 @@ export const useGameStore = defineStore("game", () => {
     };
   };
 
-  const setState = (state) => {
+  const setState = (state: number[]) => {
     board.value.forEach((card, i) => (card.state = state[i]));
   };
 
-  const open = (idx) => {
+  const open = (idx: number) => {
     if (board.value[idx] && board.value[idx].closed()) {
       board.value[idx].state -= 1;
     }
   };
 
-  const buildGame = (nextTurn) => {
+  const buildGame = (nextTurn: number) => {
     turn.value = nextTurn;
     const start = boardSize * (turn.value - 1);
     const end = start + boardSize;

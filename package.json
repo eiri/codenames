@@ -8,6 +8,7 @@
     "dev": "vite --host --port 5173",
     "build": "vite build",
     "test": "vitest run",
+    "lint": "eslint -c eslint.config.ts src",
     "dev-test": "vitest --reporter=basic --disable-console-intercept",
     "preview": "vite preview",
     "convert": "node ./assets/convert.js ./assets/ACB_codenames.txt ./src/assets/words.json",
@@ -23,13 +24,20 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^25.0.3",
     "@vitejs/plugin-vue": "^6.0.3",
     "dotenv": "^17.2.3",
+    "eslint": "^9.39.2",
+    "eslint-plugin-vue": "^10.6.2",
+    "globals": "^17.0.0",
     "jsdom": "^27.4.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.0.8",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
     "vite": "^7.3.0",
     "vitest": "^4.0.16"
   }

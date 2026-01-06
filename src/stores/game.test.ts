@@ -3,11 +3,13 @@ import { createApp } from "vue";
 import { setActivePinia, createPinia, storeToRefs } from "pinia";
 import rnd from "@/plugins/rnd";
 import dictionary from "@/assets/words.json";
-import { useGameStore } from "@/stores/game.js";
+import { useGameStore } from "@/stores/game";
+
+type GameStore = ReturnType<typeof useGameStore>;
 
 describe("Game Store", () => {
   const app = createApp({});
-  let store;
+  let store: GameStore;
 
   beforeAll(() => {
     const pinia = createPinia();
@@ -23,7 +25,7 @@ describe("Game Store", () => {
   });
 
   it("Doesn't repeat words for 46 turns", () => {
-    let seen = [];
+    const seen = [];
     for (let turn = 1; turn <= 46; turn++) {
       store.buildGame(turn);
       for (const card of store.board) {
@@ -39,31 +41,31 @@ describe("Game Store", () => {
       {
         turn: 1,
         expect: [
-          939, 177, 599, 394, 1043, 416, 1020, 1025, 842, 822, 993, 508, 901,
-          859, 225, 1037, 92, 746, 71, 236, 882, 789, 817, 648, 690,
+          445, 924, 1045, 604, 1127, 789, 741, 959, 356, 1005, 7, 303, 774, 651,
+          255, 871, 342, 105, 152, 145, 386, 125, 528, 775, 687,
         ],
       },
       {
         turn: 3,
         expect: [
-          656, 912, 37, 1062, 364, 161, 318, 148, 382, 81, 716, 976, 91, 140,
-          755, 349, 455, 600, 733, 97, 396, 507, 372, 978, 437,
+          511, 350, 556, 72, 1006, 1146, 93, 660, 116, 233, 640, 725, 971, 570,
+          1038, 201, 259, 111, 235, 419, 811, 624, 474, 352, 794,
         ],
       },
       {
         turn: 2,
         expect: [
-          77, 520, 123, 567, 527, 221, 264, 184, 737, 305, 147, 707, 688, 846,
-          239, 934, 863, 127, 141, 671, 1016, 839, 1051, 661, 462,
+          995, 272, 855, 134, 1020, 1111, 762, 50, 502, 462, 881, 938, 878, 480,
+          148, 1094, 849, 406, 1147, 128, 839, 745, 135, 1011, 584,
         ],
       },
     ]);
     testTable.forEach((test) => {
       store.buildGame(test.turn);
       expect(board.value).toHaveLength(test.expect.length);
-      for (let i = 0; i < board.length; i++) {
+      for (let i = 0; i < board.value.length; i++) {
         const j = test.expect[i];
-        expect(board.value[i]).toEqual(dictionary[j]);
+        expect(board.value[i].word).toEqual(dictionary[j]);
       }
     });
   });

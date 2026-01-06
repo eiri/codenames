@@ -1,13 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted, inject } from "vue";
 import { useRouter } from "vue-router";
 
 import Info from "@/components/Info.vue";
 import Controls from "@/components/Controls.vue";
 import Screen from "@/components/Screen.vue";
+import { brokerKey, Broker } from "@/plugins/broker";
 
 const router = useRouter();
-const broker = inject("broker");
+const broker = inject<Broker>(brokerKey);
 
 onMounted(async () => {
     if (localStorage.getItem("loggedIn")) {
@@ -18,7 +19,7 @@ onMounted(async () => {
     }
 
     console.debug(`Game: onMounted`);
-    localStorage.setItem("loggedIn", true);
+    localStorage.setItem("loggedIn", "true");
     try {
         await broker.connect();
     } catch (error) {
@@ -29,7 +30,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     console.debug("Game: onUnmounted");
-    if (localStorage.getItem("loggedIn")) {
+    if (localStorage.getItem("loggedIn") === "true") {
         broker.disconnect();
         localStorage.removeItem("loggedIn");
     }

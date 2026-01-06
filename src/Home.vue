@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { SHA256 } from "crypto-es";
 
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 
-import { usePlayersStore } from "@/stores/players.js";
+import { Player, usePlayersStore } from "@/stores/players";
 
 const router = useRouter();
 
@@ -19,20 +19,14 @@ const room = ref("");
 const password = ref("");
 const error = ref("");
 
-const setUser = (user) => {
+const setUser = (user: Player) => {
     showForm.value = true;
     rPwd.value.focus();
-    if (user == "new") {
-        username.value = "";
-        room.value = "";
-        password.value = "";
-        return;
-    }
     username.value = user.name;
-    room.value = 212;
+    room.value = "212";
 };
 
-const login = (e) => {
+const login = () => {
     if (username.value == "") {
         error.value = `Missing username`;
         return false;
@@ -103,7 +97,7 @@ onMounted(() => {
                             'ring-zinc-200': username == player.name,
                         }"
                         v-for="player in players"
-                        :key="player"
+                        :key="player.name"
                         :src="player.avatar"
                         :alt="player.name"
                         @click="setUser(player)"

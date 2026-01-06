@@ -1,13 +1,30 @@
 import { AES, Utf8 } from "crypto-es";
-import { Realtime } from "ably";
+import {
+  Realtime,
+  RealtimeChannel,
+  PresenceMessage,
+  InboundMessage,
+} from "ably";
 
+import type { App, InjectionKey } from "vue";
 import { useGameStore } from "@/stores/game";
-import { usePlayersStore } from "@/stores/players";
+import { Captain, usePlayersStore } from "@/stores/players";
 
-class Broker {
-  #client;
-  #username;
-  #syncLeader = null;
+type GameStore = ReturnType<typeof useGameStore>;
+type PlayersStore = ReturnType<typeof usePlayersStore>;
+
+export const brokerKey: InjectionKey<Broker> = Symbol("broker");
+
+export class Broker {
+  private client: Realtime;
+  private username: string;
+  private syncLeader: string = null;
+
+  playersStore: PlayersStore;
+  gameStore: GameStore;
+  channel: RealtimeChannel = null;
+  reqStateChannel: RealtimeChannel = null;
+
   constructor() {
     console.debug(`broker: init`);
     this.playersStore = usePlayersStore();
@@ -31,9 +48,9 @@ class Broker {
       throw new Error("Invalid API Key");
     }
 
-    this.#client = new Realtime({ key: ablyAPIKey, clientId: username });
-    await this.#client.connection.once("connected");
-    this.#username = username;
+    this.client = new Realtime({ key: ablyAPIKey, clientId: username });
+    await this.client.connection.once("connected");
+    this.username = username;
     console.log("broker: connected");
   }
 
@@ -53,16 +70,16 @@ class Broker {
       now.getDate().toString().padStart(2, "0") +
       room;
     this.gameStore.setSeed(seed);
-    this.playersStore.setPlayer(this.#username);
+    this.playersStore.setPlayer(this.username);
 
     const channelName = `room:${room}`;
-    this.channel = this.#client.channels.get(channelName);
+    this.channel = this.client.channels.get(channelName);
 
     await this.channel.presence.subscribe(
       "enter",
       async ({ clientId: player }) => {
         console.debug(`broker: presence enter ${player}`);
-        this.playersStore.addPlayer(player, { captain: 0 });
+        this.playersStore.addPlayer(player, Captain.None);
       },
     );
 
@@ -74,52 +91,57 @@ class Broker {
       },
     );
 
-    await this.channel.presence.subscribe("update", async (msg) => {
-      console.debug(`broker: presence update ${JSON.stringify(msg)}`);
-      const {
-        clientId: player,
-        data: { captain },
-      } = msg;
-      this.playersStore.setCaptain(player, captain);
-    });
+    await this.channel.presence.subscribe(
+      "update",
+      async (msg: PresenceMessage) => {
+        console.debug(`broker: presence update ${JSON.stringify(msg)}`);
+        const {
+          clientId: player,
+          data: { captain },
+        } = msg;
+        this.playersStore.setCaptain(player, captain);
+      },
+    );
 
-    this.#syncLeader = this.#username;
+    this.syncLeader = this.username;
     const members = await this.channel.presence.get();
     console.debug(`broker: sync members (${members.length})`);
     this.playersStore.$reset();
-    this.playersStore.setPlayer(this.#username);
-    for (let i in members) {
-      const { clientId: player, data } = members[i];
-      this.playersStore.addPlayer(player, data);
-      if (player != this.#username) {
-        this.#syncLeader = player;
+    this.playersStore.setPlayer(this.username);
+    for (const i in members) {
+      const {
+        clientId: player,
+        data: { captain } = { captain: Captain.None },
+      } = members[i];
+      this.playersStore.addPlayer(player, captain);
+      if (player != this.username) {
+        this.syncLeader = player;
       }
     }
 
     await this.channel.presence.enter();
 
     // callbacks
-    await this.channel.subscribe("open", ({ data: idx }) => {
-      console.debug(`broker: received open ${idx} as ${this.#username}`);
+    await this.channel.subscribe("open", ({ data: { idx } }) => {
+      console.debug(`broker: received open ${idx} as ${this.username}`);
       this.gameStore.open(idx);
     });
 
     await this.channel.subscribe("nextGame", () => {
-      console.debug(`broker: received nextGame as ${this.#username}`);
+      console.debug(`broker: received nextGame as ${this.username}`);
       this.playersStore.newGame();
       this.gameStore.buildGame(this.gameStore.turn + 1);
     });
 
     await this.channel.subscribe("globalLogout", () => {
-      console.debug(`broker: received globalLogout as ${this.#username}`);
+      console.debug(`broker: received globalLogout as ${this.username}`);
       this.disconnect();
       this.playersStore.logout();
     });
 
     // sync state
-    this.reqStateChannel = this.#client.channels.getDerived(channelName, {
-      filter:
-        'name == `"reqState"` && headers.to == `"' + this.#username + '"`',
+    this.reqStateChannel = this.client.channels.getDerived(channelName, {
+      filter: 'name == `"reqState"` && headers.to == `"' + this.username + '"`',
     });
     const onReqState = () => {
       console.debug(`broker: received reqState`);
@@ -130,7 +152,9 @@ class Broker {
     await this.reqStateChannel.subscribe(onReqState);
 
     // receive once
-    const onAckState = ({ data: { turn, state } }) => {
+    const onAckState = (msg: InboundMessage) => {
+      if (!msg.data) return;
+      const { turn, state } = msg.data as { turn: number; state: number[] };
       console.debug(
         `broker: received ackState for turn ${turn} state ${state}`,
       );
@@ -145,17 +169,17 @@ class Broker {
       name: "reqState",
       extras: {
         headers: {
-          from: this.#username,
-          to: this.#syncLeader,
+          from: this.username,
+          to: this.syncLeader,
         },
       },
     });
   }
 
-  open(idx) {
+  open(idx: number) {
     console.debug(`broker: publish open ${idx}`);
     this.gameStore.open(idx);
-    this.channel.publish("open", idx);
+    this.channel.publish("open", { idx });
   }
 
   nextGame() {
@@ -163,9 +187,9 @@ class Broker {
     this.channel.publish("nextGame", null);
   }
 
-  setCaptain(captain) {
+  setCaptain(captain: Captain) {
     console.debug(`broker: send setCaptain ${captain}`);
-    this.playersStore.setCaptain(this.#username, captain);
+    this.playersStore.setCaptain(this.username, captain);
     this.channel.presence.update({ captain });
   }
 
@@ -176,28 +200,28 @@ class Broker {
 
   async disconnect() {
     console.debug(`broker: disconnect`);
-    await this.channel.presence.unsubscribe();
+    this.channel.presence.unsubscribe();
     await this.channel.presence.leave();
 
-    await this.reqStateChannel.unsubscribe();
+    this.reqStateChannel.unsubscribe();
     await this.reqStateChannel.detach();
     this.reqStateChannel = null;
 
-    await this.channel.unsubscribe();
+    this.channel.unsubscribe();
     await this.channel.detach();
     this.channel = null;
 
     this.gameStore.$reset();
     this.playersStore.$reset();
 
-    this.#client.connection.off();
-    this.#client.close();
+    this.client.connection.off();
+    this.client.close();
   }
 }
 
 export default {
-  install(app) {
+  install(app: App) {
     const broker = new Broker();
-    app.provide("broker", broker);
+    app.provide(brokerKey, broker);
   },
 };

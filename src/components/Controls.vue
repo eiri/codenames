@@ -1,12 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { inject } from "vue";
 import { storeToRefs } from "pinia";
 
 import Toggle from "@/components/Toggle.vue";
-import { useGameStore } from "@/stores/game.js";
-import { usePlayersStore } from "@/stores/players.js";
+import { useGameStore } from "@/stores/game";
+import { usePlayersStore } from "@/stores/players";
 
-const broker = inject("broker");
+import { brokerKey, Broker } from "@/plugins/broker";
+
+const broker = inject<Broker>(brokerKey);
+
 const { redScore, blueScore } = storeToRefs(useGameStore());
 const { isRedCaptain, isRedCaptainTaken, isBlueCaptain, isBlueCaptainTaken } =
     usePlayersStore();
