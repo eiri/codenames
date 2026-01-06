@@ -3,7 +3,6 @@ import {
   Realtime,
   RealtimeChannel,
   PresenceMessage,
-  messageCallback,
   InboundMessage,
 } from "ably";
 
@@ -13,13 +12,6 @@ import { Captain, usePlayersStore } from "@/stores/players";
 
 type GameStore = ReturnType<typeof useGameStore>;
 type PlayersStore = ReturnType<typeof usePlayersStore>;
-
-interface AckStateMessage extends InboundMessage {
-  data: {
-    turn: number;
-    state: number[];
-  };
-}
 
 export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 
@@ -160,8 +152,9 @@ export class Broker {
     await this.reqStateChannel.subscribe(onReqState);
 
     // receive once
-    const onAckState: messageCallback<AckStateMessage> = (msg) => {
-      const { turn, state } = msg.data;
+    const onAckState = (msg: InboundMessage) => {
+      if (!msg.data) return;
+      const { turn, state } = msg.data as { turn: number; state: number[] };
       console.debug(
         `broker: received ackState for turn ${turn} state ${state}`,
       );

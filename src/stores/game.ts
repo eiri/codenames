@@ -52,7 +52,7 @@ export const useGameStore = defineStore("game", () => {
     .concat(Array(red).fill(CardState.RedClosed))
     .concat(Array(blue).fill(CardState.BlueClosed))
     .concat(Array(white).fill(CardState.WhiteClosed));
-  let deck = [];
+  let deck: Card[] = [];
 
   const turn = ref(1);
   const board = ref<Card[]>([]);
