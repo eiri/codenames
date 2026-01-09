@@ -83,23 +83,15 @@ export const useGameStore = defineStore("game", () => {
     return "";
   });
 
-  const shuffle = (desk: (string | CardState)[]) => {
-    // Fisher-Yates shuffle
-    for (let i = desk.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd.next() * (i + 1));
-      [desk[i], desk[j]] = [desk[j], desk[i]];
-    }
-  };
-
   const setSeed = (seed: string) => {
     rnd.mash(seed);
     const dictionary = allWords.slice();
-    shuffle(dictionary);
+    rnd.shuffle(dictionary);
 
     for (let i = 0; i < dictionary.length; i += boardSize) {
       const words = dictionary.slice(i, i + boardSize);
       const cards = round.slice();
-      shuffle(cards);
+      rnd.shuffle(cards);
       for (const idx of cards.keys()) {
         deck.push(new Card({ idx, word: words[idx], state: cards[idx] }));
       }

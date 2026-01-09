@@ -24,6 +24,14 @@ export class Rnd {
   next(): number {
     return this.prng.quick();
   }
+
+  shuffle<T>(list: T[]): void {
+    // Fisher-Yates shuffle
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(this.next() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+  }
 }
 
 export default {
