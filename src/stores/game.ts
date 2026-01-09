@@ -54,6 +54,7 @@ export const useGameStore = defineStore("game", () => {
     .concat(Array(white).fill(CardState.WhiteClosed));
   let deck: Card[] = [];
 
+  const seed = ref("");
   const turn = ref(1);
   const board = ref<Card[]>([]);
 
@@ -83,8 +84,9 @@ export const useGameStore = defineStore("game", () => {
     return "";
   });
 
-  const setSeed = (seed: string) => {
-    rnd.mash(seed);
+  const setSeed = (newSeed: string) => {
+    seed.value = newSeed;
+    rnd.mash(seed.value);
     const dictionary = allWords.slice();
     rnd.shuffle(dictionary);
 
@@ -131,6 +133,7 @@ export const useGameStore = defineStore("game", () => {
   };
 
   return {
+    seed,
     turn,
     board,
     redScore,

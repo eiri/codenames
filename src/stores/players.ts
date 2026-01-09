@@ -1,6 +1,8 @@
-import { ref, reactive } from "vue";
+import { ref, inject, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { defineStore } from "pinia";
+
+import { rndKey, Rnd } from "@/plugins/rnd";
 
 export enum Captain {
   None = 0,
@@ -17,6 +19,7 @@ export interface Player {
 }
 
 export const usePlayersStore = defineStore("players", () => {
+  const rnd = inject<Rnd>(rndKey);
   const router = useRouter();
   const player = ref("");
 
@@ -111,6 +114,65 @@ export const usePlayersStore = defineStore("players", () => {
     }
   };
 
+  function fairRearrange<T>(pairs: [T, T][]): [T, T][] {
+    const result: [T, T][] = [];
+    const used: Set<T> = new Set();
+    let recent: Set<T> = new Set();
+    const remaining: [T, T][] = [...pairs];
+
+    while (remaining.length > 0) {
+      let progress = false;
+
+      // Try normal scheduling (avoid used & recent)
+      for (let i = 0; i < remaining.length; i++) {
+        const [a, b] = remaining[i];
+        if (!used.has(a) && !used.has(b) && !recent.has(a) && !recent.has(b)) {
+          result.push([a, b]);
+          used.add(a);
+          used.add(b);
+          recent = new Set([a, b]);
+          remaining.splice(i, 1);
+          progress = true;
+          break;
+        }
+      }
+
+      if (!progress) {
+        // No pair could be scheduled without conflict
+        // Force a pair (ignore recent) to ensure progress
+        const [a, b] = remaining.shift()!;
+        result.push([a, b]);
+        used.add(a);
+        used.add(b);
+        recent = new Set([a, b]);
+        // continue loop
+      }
+
+      // Reset used if no pair was added in normal scheduling
+      if (used.size >= 0 && !progress) {
+        used.clear();
+      }
+    }
+
+    return result;
+  }
+
+  const nextCaptains = (seed: string, turn: number): [string, string] => {
+    rnd.mash(seed);
+    const names = Object.keys(players);
+    // all permutations
+    const pairs: [string, string][] = names
+      .flatMap((a) => names.map((b) => [a, b]))
+      .filter(([a, b]) => a !== b);
+    rnd.shuffle(pairs);
+    //greedy non-conflicting scheduling
+    const fairPairs = fairRearrange(pairs);
+    // slice for the given turn
+    const wrappedIdx =
+      (((turn - 1) % fairPairs.length) + fairPairs.length) % fairPairs.length;
+    return fairPairs[wrappedIdx];
+  };
+
   const logout = () => {
     router.push("/");
   };
@@ -135,6 +197,7 @@ export const usePlayersStore = defineStore("players", () => {
     isBlueCaptainTaken,
     isCaptainView,
     newGame,
+    nextCaptains,
     logout,
     $reset,
   };
