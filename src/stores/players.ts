@@ -22,6 +22,7 @@ export const usePlayersStore = defineStore("players", () => {
   const rnd = inject<Rnd>(rndKey);
   const router = useRouter();
   const player = ref("");
+  const captainsTurn = ref(1);
 
   const players = reactive<Record<string, Player>>({
     Akari: {
@@ -108,10 +109,11 @@ export const usePlayersStore = defineStore("players", () => {
     return me ? me.captain != Captain.None : false;
   };
 
-  const newGame = () => {
+  const newGame = (nextTurn: number) => {
     for (const p in players) {
       players[p].captain = Captain.None;
     }
+    captainsTurn.value = nextTurn;
   };
 
   function fairRearrange<T>(pairs: [T, T][]): [T, T][] {
@@ -161,9 +163,9 @@ export const usePlayersStore = defineStore("players", () => {
     rnd.mash(seed);
     const names = Object.keys(players);
     // all permutations
-    const pairs: [string, string][] = names
-      .flatMap((a) => names.map((b) => [a, b]))
-      .filter(([a, b]) => a !== b);
+    const pairs: [string, string][] = names.flatMap((a) =>
+      names.filter((b) => a !== b).map((b) => [a, b] as [string, string]),
+    );
     rnd.shuffle(pairs);
     //greedy non-conflicting scheduling
     const fairPairs = fairRearrange(pairs);
@@ -186,6 +188,7 @@ export const usePlayersStore = defineStore("players", () => {
   };
 
   return {
+    captainsTurn,
     players,
     addPlayer,
     removePlayer,

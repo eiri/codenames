@@ -7,7 +7,7 @@ import {
 } from "ably";
 
 import type { App, InjectionKey } from "vue";
-import { useGameStore } from "@/stores/game";
+import { GameResult, useGameStore } from "@/stores/game";
 import { Captain, usePlayersStore } from "@/stores/players";
 
 type GameStore = ReturnType<typeof useGameStore>;
@@ -127,9 +127,18 @@ export class Broker {
       this.gameStore.open(idx);
     });
 
-    await this.channel.subscribe("nextGame", () => {
-      console.debug(`broker: received nextGame as ${this.username}`);
-      this.playersStore.newGame();
+    await this.channel.subscribe("nextGame", ({ data: { gameResult } }) => {
+      console.debug(
+        `broker: received nextGame as ${this.username} with game result ${gameResult}`,
+      );
+      if (
+        gameResult == GameResult.InProgress ||
+        gameResult == GameResult.BothTeamsLost
+      ) {
+        this.playersStore.newGame(this.playersStore.captainsTurn);
+      } else {
+        this.playersStore.newGame(this.playersStore.captainsTurn + 1);
+      }
       this.gameStore.buildGame(this.gameStore.turn + 1);
     });
 
@@ -146,18 +155,27 @@ export class Broker {
     const onReqState = () => {
       console.debug(`broker: received reqState`);
       const state = this.gameStore.getState();
-      console.debug(`broker: publish ackState ${JSON.stringify(state)}`);
-      this.channel.publish("ackState", state);
+      const captainTurn = this.playersStore.captainsTurn;
+      // FIXME! ok, this is a hack. what I really need to do here is to create a new store for bout (or turn) state
+      // and move all state of turn, captains, desk state,game result in there, so two other stores will be just
+      // "tables" generated from init seed and out store/turn will pull data from there
+      // and manage cursor (aka turn, catainTurn) on there
+      console.debug(
+        `broker: publish ackState ${JSON.stringify(state)} with captainTurn: ${captainTurn}`,
+      );
+      this.channel.publish("ackState", [state, captainTurn]);
     };
     await this.reqStateChannel.subscribe(onReqState);
 
     // receive once
     const onAckState = (msg: InboundMessage) => {
       if (!msg.data) return;
-      const { turn, state } = msg.data as { turn: number; state: number[] };
+      const { turn, state } = msg.data[0] as { turn: number; state: number[] };
+      const captainTurn = msg.data[1];
       console.debug(
-        `broker: received ackState for turn ${turn} state ${state}`,
+        `broker: received ackState for turn ${turn} state ${state} with captainTurn: ${captainTurn}`,
       );
+      this.playersStore.newGame(captainTurn);
       this.gameStore.buildGame(turn);
       this.gameStore.setState(state);
       this.channel.unsubscribe("ackState");
@@ -182,9 +200,9 @@ export class Broker {
     this.channel.publish("open", { idx });
   }
 
-  nextGame() {
+  nextGame(gameResult: GameResult) {
     console.debug(`broker: send nextGame`);
-    this.channel.publish("nextGame", null);
+    this.channel.publish("nextGame", { gameResult });
   }
 
   setCaptain(captain: Captain) {
