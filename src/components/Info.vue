@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, inject } from "vue";
+import { ref, inject, computed } from "vue";
 import { storeToRefs } from "pinia";
 
-import { useGameStore } from "@/stores/game";
+import { GameResult, useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
 import { brokerKey, Broker } from "@/plugins/broker";
 
@@ -14,6 +14,19 @@ const { turn, redScore, blueScore, gameOver } = storeToRefs(store);
 
 const playersStore = usePlayersStore();
 const { players } = storeToRefs(playersStore);
+
+const gameResult = computed(() => {
+    switch (gameOver.value) {
+        case GameResult.BothTeamsLost:
+            return "Both teams lost";
+        case GameResult.RedTeamWon:
+            return "Red team won";
+        case GameResult.BlueTeamWon:
+            return "Blue team won";
+        default:
+            return "";
+    }
+});
 </script>
 
 <template>
@@ -71,7 +84,7 @@ const { players } = storeToRefs(playersStore);
                 'text-code-blue-700': blueScore == 0,
             }"
         >
-            {{ gameOver }}
+            {{ gameResult }}
         </div>
         <div class="flex-auto">
             <div class="flex justify-end -space-x-1.5">

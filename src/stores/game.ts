@@ -4,6 +4,13 @@ import { defineStore } from "pinia";
 import { rndKey, Rnd } from "@/plugins/rnd";
 import allWords from "@/assets/words.json";
 
+export enum GameResult {
+  InProgress = 0,
+  RedTeamWon = 1,
+  BlueTeamWon = 2,
+  BothTeamsLost = 3,
+}
+
 export enum CardState {
   BlackOpened = 0,
   BlackClosed = 1,
@@ -78,10 +85,10 @@ export const useGameStore = defineStore("game", () => {
 
   const gameOver = computed(() => {
     if (board.value.some((cur) => cur.state == CardState.BlackOpened))
-      return "Both teams lost";
-    if (redScore.value == 0) return "Red team won";
-    if (blueScore.value == 0) return "Blue team won";
-    return "";
+      return GameResult.BothTeamsLost;
+    if (redScore.value == 0) return GameResult.RedTeamWon;
+    if (blueScore.value == 0) return GameResult.BlueTeamWon;
+    return GameResult.InProgress;
   });
 
   const setSeed = (newSeed: string) => {

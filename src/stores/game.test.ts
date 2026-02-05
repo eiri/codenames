@@ -3,7 +3,7 @@ import { createApp } from "vue";
 import { setActivePinia, createPinia, storeToRefs } from "pinia";
 import rnd from "@/plugins/rnd";
 import dictionary from "@/assets/words.json";
-import { useGameStore } from "@/stores/game";
+import { GameResult, useGameStore } from "@/stores/game";
 
 type GameStore = ReturnType<typeof useGameStore>;
 
@@ -102,9 +102,9 @@ describe("Game Store", () => {
     const { gameOver } = storeToRefs(store);
 
     const cases = [
-      { expected: "Both teams lost", cards: [20] },
-      { expected: "Red team won", cards: [4, 5, 8, 11, 14, 16, 21, 23] },
-      { expected: "Blue team won", cards: [3, 6, 7, 9, 15, 19, 24] },
+      { expected: GameResult.BothTeamsLost, cards: [20] },
+      { expected: GameResult.RedTeamWon, cards: [4, 5, 8, 11, 14, 16, 21, 23] },
+      { expected: GameResult.BlueTeamWon, cards: [3, 6, 7, 9, 15, 19, 24] },
     ];
 
     for (const { expected, cards } of cases) {
@@ -112,7 +112,7 @@ describe("Game Store", () => {
       store.setSeed("20241212212");
       store.buildGame(1);
 
-      expect(gameOver.value).toBe("");
+      expect(gameOver.value).toBe(GameResult.InProgress);
 
       cards.forEach((i) => store.open(i));
       expect(gameOver.value).toBe(expected);
