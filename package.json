@@ -29,7 +29,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^25.2.1",
     "@vitejs/plugin-vue": "^6.0.4",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.2.4",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^10.7.0",
     "globals": "^17.3.0",
