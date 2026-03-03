@@ -24,13 +24,13 @@
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/vite": "^4.2.1",
     "@types/node": "^25.3.3",
     "@vitejs/plugin-vue": "^6.0.4",
     "dotenv": "^17.3.1",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.2",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.4.0",
     "jsdom": "^28.1.0",
