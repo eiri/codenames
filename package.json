@@ -30,7 +30,7 @@
     "@types/node": "^25.4.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "dotenv": "^17.3.1",
-    "eslint": "^10.0.2",
+    "eslint": "^10.0.3",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.4.0",
     "jsdom": "^28.1.0",
