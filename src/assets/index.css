@@ -1,14 +1,14 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
   --font-*: initial;
   --font-serif:
-    'Playfair', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    "Playfair", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-sans:
-    'Source Sans 3', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    "Source Sans 3", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  --background-image-login: url('./bg.jpg');
+  --background-image-login: url("./bg.jpg");
 
   --color-code-blue-300: #d0e6f4;
   --color-code-blue-700: #467e98;
