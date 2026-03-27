@@ -1,18 +1,15 @@
 {
   "compilerOptions": {
     "allowJs": false,
-    "baseUrl": ".",
     "checkJs": false,
-    "downlevelIteration": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "module": "esnext",
-    "moduleResolution": "node",
     "noEmit": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
@@ -20,5 +17,10 @@
     "strictNullChecks": false,
     "target": "esnext",
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.js"],
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.d.ts",
+    "./src/**/*.vue",
+    "./src/**/*.js",
+  ],
 }
