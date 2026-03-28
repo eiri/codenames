@@ -14,7 +14,7 @@ onMounted(async () => {
   console.debug(`Game: onMounted`);
   try {
     await broker.connect();
-    localStorage.setItem("loggedIn", "true");
+    sessionStorage.setItem("loggedIn", "true");
   } catch (error) {
     console.error(error);
     router.push(`/`);
@@ -23,9 +23,9 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   console.debug("Game: onUnmounted");
-  if (localStorage.getItem("loggedIn")) {
+  if (sessionStorage.getItem("loggedIn")) {
     await broker.disconnect();
-    localStorage.removeItem("loggedIn");
+    sessionStorage.removeItem("loggedIn");
   }
 });
 </script>

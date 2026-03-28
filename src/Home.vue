@@ -47,10 +47,10 @@ const login = () => {
 
   error.value = "";
   // store values for connect
-  localStorage.clear();
-  localStorage.setItem("room", room.value);
-  localStorage.setItem("username", username.value);
-  localStorage.setItem("password", password.value);
+  sessionStorage.clear();
+  sessionStorage.setItem("room", room.value);
+  sessionStorage.setItem("username", username.value);
+  sessionStorage.setItem("password", password.value);
 
   router.push(`/room/${room.value}`);
 };
@@ -58,7 +58,7 @@ const login = () => {
 onMounted(() => {
   // remove old stored values
   console.debug("Home: onMounted");
-  localStorage.clear();
+  sessionStorage.clear();
 });
 </script>
 
