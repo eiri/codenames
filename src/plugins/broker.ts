@@ -1,10 +1,5 @@
 import { AES, Utf8 } from "crypto-es";
-import {
-  Realtime,
-  RealtimeChannel,
-  PresenceMessage,
-  InboundMessage,
-} from "ably";
+import { Realtime, RealtimeChannel, InboundMessage } from "ably";
 
 import type { App, InjectionKey } from "vue";
 import { GameResult, useGameStore } from "@/stores/game";
@@ -18,7 +13,6 @@ export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 export class Broker {
   private client: Realtime;
   private username: string;
-  private syncLeader: string = null;
 
   playersStore: PlayersStore;
   gameStore: GameStore;
@@ -75,53 +69,27 @@ export class Broker {
     const channelName = `room:${room}`;
     this.channel = this.client.channels.get(channelName);
 
-    await this.channel.presence.subscribe(
-      "enter",
-      async ({ clientId: player }) => {
-        console.debug(`broker: presence enter ${player}`);
-        this.playersStore.addPlayer(player, Captain.None);
+    await this.channel.subscribe(
+      "playerJoin",
+      ({ data: { player, captain } }) => {
+        console.debug(`broker: received playerJoin ${player}`);
+        this.playersStore.addPlayer(player, captain);
       },
     );
 
-    await this.channel.presence.subscribe(
-      "leave",
-      async ({ clientId: player }) => {
-        console.debug(`broker: presence leave ${player}`);
-        this.playersStore.removePlayer(player);
-      },
-    );
+    await this.channel.subscribe("playerLeave", ({ data: { player } }) => {
+      console.debug(`broker: received playerLeave ${player}`);
+      this.playersStore.removePlayer(player);
+    });
 
-    await this.channel.presence.subscribe(
-      "update",
-      async (msg: PresenceMessage) => {
-        console.debug(`broker: presence update ${JSON.stringify(msg)}`);
-        const {
-          clientId: player,
-          data: { captain },
-        } = msg;
+    await this.channel.subscribe(
+      "setCaptain",
+      ({ data: { player, captain } }) => {
+        console.debug(`broker: received setCaptain ${player} -> ${captain}`);
         this.playersStore.setCaptain(player, captain);
       },
     );
 
-    this.syncLeader = this.username;
-    const members = await this.channel.presence.get();
-    console.debug(`broker: sync members (${members.length})`);
-    this.playersStore.$reset();
-    this.playersStore.setPlayer(this.username);
-    for (const i in members) {
-      const {
-        clientId: player,
-        data: { captain } = { captain: Captain.None },
-      } = members[i];
-      this.playersStore.addPlayer(player, captain);
-      if (player != this.username) {
-        this.syncLeader = player;
-      }
-    }
-
-    await this.channel.presence.enter();
-
-    // callbacks
     await this.channel.subscribe("open", ({ data: { idx } }) => {
       console.debug(`broker: received open ${idx} as ${this.username}`);
       this.gameStore.open(idx);
@@ -148,50 +116,58 @@ export class Broker {
       this.playersStore.logout();
     });
 
-    // sync state
-    this.reqStateChannel = this.client.channels.getDerived(channelName, {
-      filter: 'name == `"reqState"` && headers.to == `"' + this.username + '"`',
-    });
-    const onReqState = () => {
-      console.debug(`broker: received reqState`);
+    // Any connected peer that receives reqState responds with full state.
+    // The joining client takes the first ackState reply and ignores the rest.
+    const onReqState = ({ data: { from } }: InboundMessage) => {
+      // Don't respond to our own broadcast (we're the one joining)
+      if (from === this.username) return;
+      console.debug(
+        `broker: received reqState from ${from}, publishing ackState`,
+      );
       const state = this.gameStore.getState();
       const captainTurn = this.playersStore.captainsTurn;
+      const players = this.playersStore.getPlayers();
       // FIXME! ok, this is a hack. what I really need to do here is to create a new store for bout (or turn) state
-      // and move all state of turn, captains, desk state,game result in there, so two other stores will be just
+      // and move all state of turn, captains, desk state, game result in there, so two other stores will be just
       // "tables" generated from init seed and out store/turn will pull data from there
       // and manage cursor (aka turn, catainTurn) on there
       console.debug(
-        `broker: publish ackState ${JSON.stringify(state)} with captainTurn: ${captainTurn}`,
+        `broker: publish ackState ${JSON.stringify(state)} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
       );
-      this.channel.publish("ackState", [state, captainTurn]);
+      this.channel.publish("ackState", [state, captainTurn, players]);
     };
-    await this.reqStateChannel.subscribe(onReqState);
+    await this.channel.subscribe("reqState", onReqState);
 
-    // receive once
     const onAckState = (msg: InboundMessage) => {
       if (!msg.data) return;
       const { turn, state } = msg.data[0] as { turn: number; state: number[] };
       const captainTurn = msg.data[1];
+      const players: { player: string; captain: Captain }[] = msg.data[2] ?? [];
       console.debug(
-        `broker: received ackState for turn ${turn} state ${state} with captainTurn: ${captainTurn}`,
+        `broker: received ackState for turn ${turn} state ${state} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
       );
+
+      this.playersStore.$reset();
+      this.playersStore.setPlayer(this.username);
       this.playersStore.newGame(captainTurn);
+      for (const { player, captain } of players) {
+        this.playersStore.addPlayer(player, captain);
+      }
+
       this.gameStore.buildGame(turn);
       this.gameStore.setState(state);
+
+      // Unsubscribe after first reply — ignore any subsequent ackState messages
       this.channel.unsubscribe("ackState");
     };
-    this.channel.subscribe("ackState", onAckState);
+    await this.channel.subscribe("ackState", onAckState);
 
-    console.debug(`broker: publish reqState`);
-    this.channel.publish({
-      name: "reqState",
-      extras: {
-        headers: {
-          from: this.username,
-          to: this.syncLeader,
-        },
-      },
+    console.debug(`broker: publish playerJoin + reqState`);
+    await this.channel.publish("playerJoin", {
+      player: this.username,
+      captain: Captain.None,
     });
+    await this.channel.publish("reqState", { from: this.username });
   }
 
   open(idx: number) {
@@ -208,7 +184,7 @@ export class Broker {
   setCaptain(captain: Captain) {
     console.debug(`broker: send setCaptain ${captain}`);
     this.playersStore.setCaptain(this.username, captain);
-    this.channel.presence.update({ captain });
+    this.channel.publish("setCaptain", { player: this.username, captain });
   }
 
   globalLogout() {
@@ -218,12 +194,8 @@ export class Broker {
 
   async disconnect() {
     console.debug(`broker: disconnect`);
-    this.channel.presence.unsubscribe();
-    await this.channel.presence.leave();
 
-    this.reqStateChannel.unsubscribe();
-    await this.reqStateChannel.detach();
-    this.reqStateChannel = null;
+    await this.channel.publish("playerLeave", { player: this.username });
 
     this.channel.unsubscribe();
     await this.channel.detach();

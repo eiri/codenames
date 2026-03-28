@@ -11,27 +11,20 @@ const router = useRouter();
 const broker = inject<Broker>(brokerKey);
 
 onMounted(async () => {
-  if (localStorage.getItem("loggedIn")) {
-    console.log("this page was reloaded");
-    localStorage.removeItem("loggedIn");
-    router.push(`/`);
-    return;
-  }
-
   console.debug(`Game: onMounted`);
-  localStorage.setItem("loggedIn", "true");
   try {
     await broker.connect();
+    localStorage.setItem("loggedIn", "true");
   } catch (error) {
     console.error(error);
     router.push(`/`);
   }
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   console.debug("Game: onUnmounted");
-  if (localStorage.getItem("loggedIn") === "true") {
-    broker.disconnect();
+  if (localStorage.getItem("loggedIn")) {
+    await broker.disconnect();
     localStorage.removeItem("loggedIn");
   }
 });
