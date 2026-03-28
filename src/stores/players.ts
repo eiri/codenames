@@ -74,6 +74,8 @@ export const usePlayersStore = defineStore("players", () => {
 
   const setPlayer = (p: string) => {
     player.value = p;
+    players[p].online = true;
+    players[p].captain = Captain.None;
   };
 
   const setCaptain = (p: string, captain: Captain) => {
@@ -84,6 +86,12 @@ export const usePlayersStore = defineStore("players", () => {
     ) {
       players[p].captain = captain;
     }
+  };
+
+  const getPlayers = (): { player: string; captain: Captain }[] => {
+    return Object.values(players)
+      .filter((p) => p.online)
+      .map((p) => ({ player: p.name, captain: p.captain }));
   };
 
   const isRedCaptain = () => {
@@ -194,6 +202,7 @@ export const usePlayersStore = defineStore("players", () => {
     removePlayer,
     setPlayer,
     setCaptain,
+    getPlayers,
     isRedCaptain,
     isRedCaptainTaken,
     isBlueCaptain,
