@@ -8,7 +8,7 @@ import { brokerKey, Broker } from "@/plugins/broker";
 
 const broker = inject<Broker>(brokerKey);
 
-const room = ref(localStorage.getItem("room"));
+const room = ref(sessionStorage.getItem("room"));
 const store = useGameStore();
 const { turn, redScore, blueScore, gameOver } = storeToRefs(store);
 

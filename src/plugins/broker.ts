@@ -28,8 +28,8 @@ export class Broker {
   }
 
   async setClient() {
-    const username = localStorage.getItem("username");
-    const password = localStorage.getItem("password");
+    const username = sessionStorage.getItem("username");
+    const password = sessionStorage.getItem("password");
     if (username == null || password == null) {
       throw new Error("Missing username or password");
     }
@@ -51,7 +51,7 @@ export class Broker {
   async connect() {
     console.debug(`broker: connect`);
 
-    const room = localStorage.getItem("room");
+    const room = sessionStorage.getItem("room");
     if (room == null) {
       throw new Error("Missing room");
     }
