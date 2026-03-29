@@ -10,9 +10,15 @@ type PlayersStore = ReturnType<typeof usePlayersStore>;
 
 export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 
+const HEARTBEAT_INTERVAL = 5_000;
+const HEARTBEAT_TIMEOUT = 16_000;
+
 export class Broker {
   private client: Realtime;
   private username: string;
+
+  private _heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private _peerTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   playersStore: PlayersStore;
   gameStore: GameStore;
@@ -72,14 +78,18 @@ export class Broker {
     await this.channel.subscribe(
       "playerJoin",
       ({ data: { player, captain } }) => {
+        if (player === this.username) return;
         console.debug(`broker: received playerJoin ${player}`);
         this.playersStore.addPlayer(player, captain);
+        this._resetPeerTimer(player);
       },
     );
 
     await this.channel.subscribe("playerLeave", ({ data: { player } }) => {
+      if (player === this.username) return;
       console.debug(`broker: received playerLeave ${player}`);
       this.playersStore.removePlayer(player);
+      this._clearPeerTimer(player);
     });
 
     await this.channel.subscribe(
@@ -152,6 +162,7 @@ export class Broker {
       this.playersStore.newGame(captainTurn);
       for (const { player, captain } of players) {
         this.playersStore.addPlayer(player, captain);
+        if (player !== this.username) this._resetPeerTimer(player);
       }
 
       this.gameStore.buildGame(turn);
@@ -162,12 +173,41 @@ export class Broker {
     };
     await this.channel.subscribe("ackState", onAckState);
 
+    // Reset eviction timer for any peer we hear a heartbeat from
+    await this.channel.subscribe("heartbeat", ({ data: { player } }) => {
+      if (player === this.username) return;
+      console.debug(`broker: received heartbeat from ${player}`);
+      this._resetPeerTimer(player);
+    });
+
     console.debug(`broker: publish playerJoin + reqState`);
     await this.channel.publish("playerJoin", {
       player: this.username,
       captain: Captain.None,
     });
     await this.channel.publish("reqState", { from: this.username });
+
+    this._heartbeatTimer = setInterval(() => {
+      this.channel.publish("heartbeat", { player: this.username });
+    }, HEARTBEAT_INTERVAL);
+  }
+
+  private _resetPeerTimer(player: string) {
+    this._clearPeerTimer(player);
+    const timer = setTimeout(() => {
+      console.debug(`broker: ${player} timed out, evicting`);
+      this.playersStore.removePlayer(player);
+      this._peerTimers.delete(player);
+    }, HEARTBEAT_TIMEOUT);
+    this._peerTimers.set(player, timer);
+  }
+
+  private _clearPeerTimer(player: string) {
+    const existing = this._peerTimers.get(player);
+    if (existing) {
+      clearTimeout(existing);
+      this._peerTimers.delete(player);
+    }
   }
 
   open(idx: number) {
@@ -194,6 +234,16 @@ export class Broker {
 
   async disconnect() {
     console.debug(`broker: disconnect`);
+
+    if (this._heartbeatTimer) {
+      clearInterval(this._heartbeatTimer);
+      this._heartbeatTimer = null;
+    }
+
+    for (const timer of this._peerTimers.values()) {
+      clearTimeout(timer);
+    }
+    this._peerTimers.clear();
 
     await this.channel.publish("playerLeave", { player: this.username });
 
