@@ -41,22 +41,22 @@ describe("Game Store", () => {
       {
         turn: 1,
         expect: [
-          445, 924, 1045, 604, 1127, 789, 741, 959, 356, 1005, 7, 303, 774, 651,
-          255, 871, 342, 105, 152, 145, 386, 125, 528, 775, 687,
+          400, 1071, 606, 130, 642, 45, 1069, 1105, 132, 653, 815, 889, 866,
+          972, 117, 229, 515, 1007, 1046, 528, 720, 152, 65, 517, 901,
         ],
       },
       {
         turn: 3,
         expect: [
-          511, 350, 556, 72, 1006, 1146, 93, 660, 116, 233, 640, 725, 971, 570,
-          1038, 201, 259, 111, 235, 419, 811, 624, 474, 352, 794,
+          774, 103, 1114, 173, 133, 437, 432, 468, 358, 250, 13, 885, 974, 323,
+          193, 1028, 785, 431, 1144, 579, 470, 523, 714, 368, 502,
         ],
       },
       {
         turn: 2,
         expect: [
-          995, 272, 855, 134, 1020, 1111, 762, 50, 502, 462, 881, 938, 878, 480,
-          148, 1094, 849, 406, 1147, 128, 839, 745, 135, 1011, 584,
+          17, 639, 1126, 227, 1038, 347, 656, 338, 428, 118, 620, 525, 1089,
+          661, 604, 709, 1051, 473, 902, 201, 170, 609, 686, 961, 233,
         ],
       },
     ]);
@@ -72,28 +72,28 @@ describe("Game Store", () => {
 
   it("Counts score correctly", () => {
     const { redScore, blueScore } = storeToRefs(store);
-    // black 20
-    // reds  4 5 8 11 14 16 21 23
-    // blues 3 6 7 9 15 19 24
+    // black 11
+    // reds  2 6 8 9 17 19 20 21
+    // blues 10 12 13 16 22 23 24
     store.buildGame(1);
     expect(redScore.value).toEqual(8);
     expect(blueScore.value).toEqual(7);
     // open whites
-    [0, 1, 2, 10].forEach((i) => store.open(i));
+    [0, 1, 3, 4].forEach((i) => store.open(i));
     expect(redScore.value).toEqual(8);
     expect(blueScore.value).toEqual(7);
     // open reds
-    [4, 5, 8, 11].forEach((i) => store.open(i));
+    [2, 6, 8, 9].forEach((i) => store.open(i));
     // open blues
-    [3, 6, 7].forEach((i) => store.open(i));
+    [10, 12, 13].forEach((i) => store.open(i));
     expect(redScore.value).toEqual(4);
     expect(blueScore.value).toEqual(4);
     // open all reds
-    [14, 16, 21, 23].forEach((i) => store.open(i));
+    [17, 19, 20, 21].forEach((i) => store.open(i));
     expect(redScore.value).toEqual(0);
     expect(blueScore.value).toEqual(4);
     // open all blues
-    [9, 15, 19, 24].forEach((i) => store.open(i));
+    [16, 22, 23, 24].forEach((i) => store.open(i));
     expect(redScore.value).toEqual(0);
     expect(blueScore.value).toEqual(0);
   });
@@ -102,9 +102,9 @@ describe("Game Store", () => {
     const { gameOver } = storeToRefs(store);
 
     const cases = [
-      { expected: GameResult.BothTeamsLost, cards: [20] },
-      { expected: GameResult.RedTeamWon, cards: [4, 5, 8, 11, 14, 16, 21, 23] },
-      { expected: GameResult.BlueTeamWon, cards: [3, 6, 7, 9, 15, 19, 24] },
+      { expected: GameResult.BothTeamsLost, cards: [11] },
+      { expected: GameResult.RedTeamWon, cards: [2, 6, 8, 9, 17, 19, 20, 21] },
+      { expected: GameResult.BlueTeamWon, cards: [10, 12, 13, 16, 22, 23, 24] },
     ];
 
     for (const { expected, cards } of cases) {
