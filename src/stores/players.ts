@@ -170,17 +170,9 @@ export const usePlayersStore = defineStore("players", () => {
   const nextCaptains = (seed: string, turn: number): [string, string] => {
     rnd.mash(seed);
     const names = Object.keys(players);
-    // all permutations
-    const pairs: [string, string][] = names.flatMap((a) =>
-      names.filter((b) => a !== b).map((b) => [a, b] as [string, string]),
-    );
-    rnd.shuffle(pairs);
-    //greedy non-conflicting scheduling
-    const fairPairs = fairRearrange(pairs);
-    // slice for the given turn
-    const wrappedIdx =
-      (((turn - 1) % fairPairs.length) + fairPairs.length) % fairPairs.length;
-    return fairPairs[wrappedIdx];
+    rnd.shuffle(names);
+    const index = ((turn - 1) % names.length) * 2;
+    return [names[index % names.length], names[(index + 1) % 5]];
   };
 
   const logout = () => {
