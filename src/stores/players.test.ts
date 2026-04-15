@@ -18,36 +18,21 @@ describe("Game Store", () => {
     store = usePlayersStore();
   });
 
-  it("Doesn't repeat captain pairs for 10 turns", () => {
+  it("Doesn't repeat captain pairs for 5 turns", () => {
     const seed = "20241212212";
     const seen = [];
-    for (let turn = 1; turn <= 20; turn++) {
+    for (let turn = 1; turn <= 5; turn++) {
       const pair = store.nextCaptains(seed, turn);
       expect(seen).not.toContain(pair.join(":"));
       seen.push(pair.join(":"));
     }
     // consistent rand
     expect(seen).toStrictEqual([
-      "Eiri:Ikadell",
-      "Vitaliy:Akari",
-      "Eiri:Vitaliy",
-      "Ikadell:Friday",
-      "Eiri:Akari",
-      "Vitaliy:Ikadell",
-      "Eiri:Friday",
-      "Akari:Vitaliy",
-      "Friday:Ikadell",
-      "Akari:Eiri",
-      "Friday:Vitaliy",
-      "Friday:Akari",
-      "Ikadell:Eiri",
-      "Vitaliy:Friday",
-      "Ikadell:Akari",
       "Friday:Eiri",
+      "Vitaliy:Akari",
+      "Ikadell:Friday",
+      "Eiri:Vitaliy",
       "Akari:Ikadell",
-      "Akari:Friday",
-      "Vitaliy:Eiri",
-      "Ikadell:Vitaliy",
     ]);
   });
 

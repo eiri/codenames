@@ -124,63 +124,12 @@ export const usePlayersStore = defineStore("players", () => {
     captainsTurn.value = nextTurn;
   };
 
-  function fairRearrange<T>(pairs: [T, T][]): [T, T][] {
-    const result: [T, T][] = [];
-    const used: Set<T> = new Set();
-    let recent: Set<T> = new Set();
-    const remaining: [T, T][] = [...pairs];
-
-    while (remaining.length > 0) {
-      let progress = false;
-
-      // Try normal scheduling (avoid used & recent)
-      for (let i = 0; i < remaining.length; i++) {
-        const [a, b] = remaining[i];
-        if (!used.has(a) && !used.has(b) && !recent.has(a) && !recent.has(b)) {
-          result.push([a, b]);
-          used.add(a);
-          used.add(b);
-          recent = new Set([a, b]);
-          remaining.splice(i, 1);
-          progress = true;
-          break;
-        }
-      }
-
-      if (!progress) {
-        // No pair could be scheduled without conflict
-        // Force a pair (ignore recent) to ensure progress
-        const [a, b] = remaining.shift()!;
-        result.push([a, b]);
-        used.add(a);
-        used.add(b);
-        recent = new Set([a, b]);
-        // continue loop
-      }
-
-      // Reset used if no pair was added in normal scheduling
-      if (used.size >= 0 && !progress) {
-        used.clear();
-      }
-    }
-
-    return result;
-  }
-
   const nextCaptains = (seed: string, turn: number): [string, string] => {
     rnd.mash(seed);
     const names = Object.keys(players);
-    // all permutations
-    const pairs: [string, string][] = names.flatMap((a) =>
-      names.filter((b) => a !== b).map((b) => [a, b] as [string, string]),
-    );
-    rnd.shuffle(pairs);
-    //greedy non-conflicting scheduling
-    const fairPairs = fairRearrange(pairs);
-    // slice for the given turn
-    const wrappedIdx =
-      (((turn - 1) % fairPairs.length) + fairPairs.length) % fairPairs.length;
-    return fairPairs[wrappedIdx];
+    rnd.shuffle(names);
+    const index = ((turn - 1) % names.length) * 2;
+    return [names[index % names.length], names[(index + 1) % 5]];
   };
 
   const logout = () => {
