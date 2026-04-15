@@ -36,13 +36,11 @@ const captains = computed(() => nextCaptains(seed.value, captainsTurn.value));
     <div class="flex flex-col items-center justify-center">
       <Toggle
         team="red"
+        :captain="captains[0]"
         :disabled="isRedCaptainTaken() && !isRedCaptain()"
         :isCaptainView="isRedCaptain()"
         :toggleCaptain="toggleRedCaptain"
       />
-      <div class="font-sans mt-2 text-base text-gray-700">
-        {{ captains[0] }}
-      </div>
     </div>
     <div class="flex justify-center text-code-red-700">
       {{ redScore }}
@@ -61,13 +59,11 @@ const captains = computed(() => nextCaptains(seed.value, captainsTurn.value));
     <div class="flex flex-col items-center justify-center">
       <Toggle
         team="blue"
+        :captain="captains[1]"
         :disabled="isBlueCaptainTaken() && !isBlueCaptain()"
         :isCaptainView="isBlueCaptain()"
         :toggleCaptain="toggleBlueCaptain"
       />
-      <div class="font-sans mt-2 text-base text-gray-700">
-        {{ captains[1] }}
-      </div>
     </div>
   </div>
 </template>
