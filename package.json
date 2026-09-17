@@ -27,7 +27,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.5.1",
-    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitejs/plugin-vue": "^6.0.9",
     "dotenv": "^17.4.2",
     "eslint": "^10.10.0",
     "eslint-plugin-vue": "^10.11.0",
