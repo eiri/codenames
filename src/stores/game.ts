@@ -91,13 +91,18 @@ export const useGameStore = defineStore("game", () => {
     return GameResult.InProgress;
   });
 
+  const hasOpenCards = computed(() =>
+    board.value.some((card) => !card.closed()),
+  );
+
   const setSeed = (newSeed: string) => {
     seed.value = newSeed;
+    deck = [];
     rnd.mash(seed.value);
     const dictionary = allWords.slice();
     rnd.shuffle(dictionary);
 
-    for (let i = 0; i < dictionary.length; i += boardSize) {
+    for (let i = 0; i + boardSize <= dictionary.length; i += boardSize) {
       const words = dictionary.slice(i, i + boardSize);
       const cards = round.slice();
       rnd.shuffle(cards);
@@ -127,10 +132,15 @@ export const useGameStore = defineStore("game", () => {
   };
 
   const buildGame = (nextTurn: number) => {
+    if (!Number.isInteger(nextTurn) || nextTurn < 1 || deck.length == 0) return;
+
     turn.value = nextTurn;
-    const start = boardSize * (turn.value - 1);
+    const rounds = deck.length / boardSize;
+    const start = boardSize * ((turn.value - 1) % rounds);
     const end = start + boardSize;
-    board.value = deck.slice(start, end);
+    board.value = deck
+      .slice(start, end)
+      .map((card) => new Card({ ...card }));
   };
 
   const $reset = () => {
@@ -146,6 +156,7 @@ export const useGameStore = defineStore("game", () => {
     redScore,
     blueScore,
     gameOver,
+    hasOpenCards,
     setSeed,
     getState,
     setState,

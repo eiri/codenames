@@ -35,6 +35,29 @@ describe("Game Store", () => {
     }
   });
 
+  it("Wraps after the last full round", () => {
+    store.buildGame(1);
+    const firstRound = store.board.map((card) => card.word);
+    store.open(0);
+
+    store.buildGame(47);
+
+    expect(store.board.map((card) => card.word)).toStrictEqual(firstRound);
+    expect(store.board.every((card) => card.closed())).toBe(true);
+  });
+
+  it("Rebuilds the deck when the seed changes", () => {
+    store.buildGame(2);
+    store.setSeed("another-seed");
+    const rebuilt = store.board.map((card) => card.word);
+
+    store.$reset();
+    store.setSeed("another-seed");
+    store.buildGame(2);
+
+    expect(store.board.map((card) => card.word)).toStrictEqual(rebuilt);
+  });
+
   it("Has expectred words, offset and limit when shuffled", () => {
     const { board } = storeToRefs(store);
     const testTable = new Set([
@@ -68,6 +91,14 @@ describe("Game Store", () => {
         expect(board.value[i].word).toEqual(dictionary[j]);
       }
     });
+  });
+
+  it("Tracks whether cards are open", () => {
+    expect(store.hasOpenCards).toBe(false);
+
+    store.open(0);
+
+    expect(store.hasOpenCards).toBe(true);
   });
 
   it("Counts score correctly", () => {

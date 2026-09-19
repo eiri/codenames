@@ -7,6 +7,7 @@ import { Captain, usePlayersStore } from "@/stores/players";
 
 type GameStore = ReturnType<typeof useGameStore>;
 type PlayersStore = ReturnType<typeof usePlayersStore>;
+type NewGameMode = "next" | "restart";
 
 export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 
@@ -97,18 +98,23 @@ export class Broker {
       this.gameStore.open(idx);
     });
 
-    await this.channel.subscribe("nextGame", ({ data: { gameResult } }) => {
+    await this.channel.subscribe(
+      "setCaptainsTurn",
+      ({ data: { turn } }) => {
+        console.debug(`broker: received setCaptainsTurn ${turn}`);
+        this.playersStore.setCaptainsTurn(turn);
+      },
+    );
+
+    await this.channel.subscribe("nextGame", ({ data: { mode } }) => {
       console.debug(
-        `broker: received nextGame as ${this.username} with game result ${gameResult}`,
+        `broker: received nextGame as ${this.username} with mode ${mode}`,
       );
-      if (
-        gameResult == GameResult.InProgress ||
-        gameResult == GameResult.BothTeamsLost
-      ) {
-        this.playersStore.newGame(this.playersStore.captainsTurn);
-      } else {
-        this.playersStore.newGame(this.playersStore.captainsTurn + 1);
-      }
+      const nextCaptainTurn =
+        mode == "next"
+          ? this.playersStore.captainsTurn + 1
+          : this.playersStore.captainsTurn;
+      this.playersStore.newGame(nextCaptainTurn);
       this.gameStore.buildGame(this.gameStore.turn + 1);
     });
 
@@ -179,8 +185,20 @@ export class Broker {
   }
 
   nextGame(gameResult: GameResult) {
-    console.debug(`broker: send nextGame`);
-    this.channel.publish("nextGame", { gameResult });
+    const mode: NewGameMode =
+      gameResult == GameResult.RedTeamWon ||
+      gameResult == GameResult.BlueTeamWon
+        ? "next"
+        : "restart";
+    console.debug(`broker: send nextGame with mode ${mode}`);
+    this.channel.publish("nextGame", { mode });
+  }
+
+  nextCaptainsTurn() {
+    const turn = this.playersStore.captainsTurn + 1;
+    console.debug(`broker: send setCaptainsTurn ${turn}`);
+    this.playersStore.setCaptainsTurn(turn);
+    this.channel.publish("setCaptainsTurn", { turn });
   }
 
   setCaptain(captain: Captain) {
@@ -197,17 +215,33 @@ export class Broker {
   async disconnect() {
     console.debug(`broker: disconnect`);
 
-    await this.channel.publish("playerLeave", { player: this.username });
-
-    this.channel.unsubscribe();
-    await this.channel.detach();
+    const channel = this.channel;
+    const client = this.client;
     this.channel = null;
+    this.client = null;
+
+    if (channel) {
+      try {
+        await channel.publish("playerLeave", { player: this.username });
+      } catch (error) {
+        console.warn("broker: failed to publish playerLeave", error);
+      }
+
+      channel.unsubscribe();
+      try {
+        await channel.detach();
+      } catch (error) {
+        console.warn("broker: failed to detach", error);
+      }
+    }
 
     this.gameStore.$reset();
     this.playersStore.$reset();
 
-    this.client.connection.off();
-    this.client.close();
+    if (client) {
+      client.connection.off();
+      client.close();
+    }
   }
 }
 
