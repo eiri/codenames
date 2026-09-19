@@ -124,12 +124,16 @@ export const usePlayersStore = defineStore("players", () => {
     captainsTurn.value = nextTurn;
   };
 
+  const setCaptainsTurn = (turn: number) => {
+    if (Number.isInteger(turn) && turn > 0) captainsTurn.value = turn;
+  };
+
   const nextCaptains = (seed: string, turn: number): [string, string] => {
     rnd.mash(seed);
     const names = Object.keys(players);
     rnd.shuffle(names);
     const index = ((turn - 1) % names.length) * 2;
-    return [names[index % names.length], names[(index + 1) % 5]];
+    return [names[index % names.length], names[(index + 1) % names.length]];
   };
 
   const logout = () => {
@@ -158,6 +162,7 @@ export const usePlayersStore = defineStore("players", () => {
     isBlueCaptainTaken,
     isCaptainView,
     newGame,
+    setCaptainsTurn,
     nextCaptains,
     logout,
     $reset,

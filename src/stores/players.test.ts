@@ -36,6 +36,14 @@ describe("Game Store", () => {
     ]);
   });
 
+  it("sets a valid captain turn", () => {
+    store.setCaptainsTurn(3);
+    expect(store.captainsTurn).toBe(3);
+
+    store.setCaptainsTurn(0);
+    expect(store.captainsTurn).toBe(3);
+  });
+
   describe("getPlayers", () => {
     beforeEach(() => {
       store.$reset();

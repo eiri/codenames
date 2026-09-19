@@ -28,7 +28,7 @@ const gameResult = computed(() => {
   }
 });
 
-const nextCaptainTurn = () => (captainsTurn.value += 1);
+const nextCaptainTurn = () => broker.nextCaptainsTurn();
 </script>
 
 <template>

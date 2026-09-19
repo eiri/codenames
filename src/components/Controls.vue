@@ -10,7 +10,8 @@ import { brokerKey, Broker } from "@/plugins/broker";
 
 const broker = inject<Broker>(brokerKey);
 
-const { seed, redScore, blueScore, gameOver } = storeToRefs(useGameStore());
+const { seed, redScore, blueScore, gameOver, hasOpenCards } =
+  storeToRefs(useGameStore());
 const { captainsTurn } = storeToRefs(usePlayersStore());
 const {
   isRedCaptain,
@@ -29,6 +30,9 @@ const toggleBlueCaptain = () => {
 };
 
 const captains = computed(() => nextCaptains(seed.value, captainsTurn.value));
+const gameButton = computed(() =>
+  gameOver.value || !hasOpenCards.value ? "New game" : "Restart game",
+);
 </script>
 
 <template>
@@ -50,7 +54,7 @@ const captains = computed(() => nextCaptains(seed.value, captainsTurn.value));
         class="w-2/3 h-12 px-4 py-0 bg-teal-700 shadow-lg shadow-teal-500/50 text-white rounded-md cursor-pointer active:scale-[.97] font-sans xl:text-2xl lg:text-xl md:text-sm"
         @click="broker.nextGame(gameOver)"
       >
-        New game
+        {{ gameButton }}
       </button>
     </div>
     <div class="flex justify-center text-code-blue-700">
