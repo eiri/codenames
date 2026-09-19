@@ -1,22 +1,13 @@
 <script setup lang="ts">
-const props = defineProps({
-  team: {
-    type: String,
-    required: true,
-  },
-  captain: {
-    type: String,
-  },
-  isCaptainView: {
-    type: Boolean,
-  },
-  toggleCaptain: {
-    type: Function,
-  },
-  disabled: {
-    type: Boolean,
-  },
-});
+interface Props {
+  team: "red" | "blue";
+  captain?: string;
+  isCaptainView?: boolean;
+  toggleCaptain: () => void;
+  disabled?: boolean;
+}
+
+const props = defineProps<Props>();
 </script>
 
 <template>

@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import { computed, toRefs } from "vue";
 
-const props = defineProps({
-  card: {
-    type: Object,
-    required: true,
-  },
-  isCaptainView: {
-    type: Boolean,
-  },
-  open: {
-    type: Function,
-  },
-});
+import type { Card } from "@/stores/game";
+
+interface Props {
+  card: Card;
+  isCaptainView?: boolean;
+  open: (idx: number) => void;
+}
+
+const props = defineProps<Props>();
 
 const { card } = toRefs(props);
 

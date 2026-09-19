@@ -1,3 +1,5 @@
+declare module "*.css";
+
 interface ImportMetaEnv {
   readonly ABLY_API_KEY: string;
   readonly SECRET: string;
