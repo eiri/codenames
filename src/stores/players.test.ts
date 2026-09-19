@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, it, describe, expect } from "vitest";
 import { createApp } from "vue";
 import { setActivePinia, createPinia } from "pinia";
+import { createMemoryHistory, createRouter } from "vue-router";
 import rnd from "@/plugins/rnd";
 import { Captain, usePlayersStore } from "./players";
 
@@ -12,7 +13,12 @@ describe("Game Store", () => {
 
   beforeAll(() => {
     const pinia = createPinia();
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: "/", component: { template: "<div />" } }],
+    });
     app.use(rnd);
+    app.use(router);
     app.use(pinia);
     setActivePinia(pinia);
     store = usePlayersStore();
