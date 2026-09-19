@@ -29,7 +29,7 @@ const cardClass = computed(() => {
 
 <template>
   <article
-    class="animate__animated transition-transform duration-150 flex items-center justify-center text-4xl border border-zinc-400 rounded-md shadow-zinc-500/50"
+    class="animate__animated flex items-center justify-center overflow-hidden rounded-md border border-zinc-400 px-1 text-center shadow-zinc-500/50 transition-transform duration-150"
     :class="[
       cardClass,
       { animate__flipInY: !card.closed() },
@@ -37,7 +37,11 @@ const cardClass = computed(() => {
     ]"
     @click="open()"
   >
-    <span class="xl:text-4xl lg:text-2xl md:text-lg">{{ card.word }}</span>
+    <span
+      class="break-words text-[0.6rem] leading-tight sm:text-xs md:text-base lg:text-xl xl:text-3xl"
+    >
+      {{ card.word }}
+    </span>
   </article>
 </template>
 

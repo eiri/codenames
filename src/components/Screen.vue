@@ -18,8 +18,10 @@ const open = (idx: number) => {
 </script>
 
 <template>
-  <div class="relative h-[63vh]">
-    <div class="h-full w-full grid grid-cols-5 gap-12">
+  <div class="relative h-[55vh] min-h-80 sm:h-[60vh] md:h-[63vh]">
+    <div
+      class="grid h-full w-full grid-cols-5 gap-1 sm:gap-2 md:gap-4 lg:gap-8 xl:gap-12"
+    >
       <Card
         v-for="(card, i) in board"
         :key="i"

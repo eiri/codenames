@@ -32,13 +32,13 @@ onUnmounted(async () => {
 </script>
 
 <template>
-  <header class="p-4 shadow-md">
+  <header class="p-2 shadow-md sm:p-4">
     <Info />
   </header>
-  <main class="p-4">
+  <main class="p-2 sm:p-4">
     <Screen />
   </main>
-  <footer class="pt-12">
+  <footer class="px-2 pt-6 sm:px-4 sm:pt-12">
     <Controls />
   </footer>
 </template>
