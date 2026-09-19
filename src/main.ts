@@ -1,3 +1,6 @@
+import "@fontsource-variable/playfair/wght.css";
+import "@fontsource-variable/source-sans-3/wght.css";
+import "animate.css";
 import "@/assets/index.css";
 
 import { createApp } from "vue";
