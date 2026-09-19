@@ -8,6 +8,13 @@ import { Captain, usePlayersStore } from "@/stores/players";
 type GameStore = ReturnType<typeof useGameStore>;
 type PlayersStore = ReturnType<typeof usePlayersStore>;
 type NewGameMode = "next" | "restart";
+type Data = Record<string, unknown>;
+
+const isData = (data: unknown): data is Data =>
+  typeof data == "object" && data != null;
+
+const isCaptain = (captain: unknown): captain is Captain =>
+  captain == Captain.None || captain == Captain.Red || captain == Captain.Blue;
 
 export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 
@@ -71,43 +78,55 @@ export class Broker {
     const channel = client.channels.get(channelName);
     this.channel = channel;
 
-    await channel.subscribe(
-      "playerJoin",
-      ({ data: { player, captain } }) => {
-        if (player === this.username) return;
-        console.debug(`broker: received playerJoin ${player}`);
-        this.playersStore.addPlayer(player, captain);
-      },
-    );
+    await channel.subscribe("playerJoin", ({ data }) => {
+      if (!isData(data)) return;
+      const { player, captain } = data;
+      if (typeof player != "string" || !isCaptain(captain)) return;
+      if (player === this.username) return;
+      console.debug(`broker: received playerJoin ${player}`);
+      this.playersStore.addPlayer(player, captain);
+    });
 
-    await channel.subscribe("playerLeave", ({ data: { player } }) => {
+    await channel.subscribe("playerLeave", ({ data }) => {
+      if (!isData(data) || typeof data.player != "string") return;
+      const { player } = data;
       if (player === this.username) return;
       console.debug(`broker: received playerLeave ${player}`);
       this.playersStore.removePlayer(player);
     });
 
-    await channel.subscribe(
-      "setCaptain",
-      ({ data: { player, captain } }) => {
-        console.debug(`broker: received setCaptain ${player} -> ${captain}`);
-        this.playersStore.setCaptain(player, captain);
-      },
-    );
+    await channel.subscribe("setCaptain", ({ data }) => {
+      if (!isData(data)) return;
+      const { player, captain } = data;
+      if (typeof player != "string" || !isCaptain(captain)) return;
+      console.debug(`broker: received setCaptain ${player} -> ${captain}`);
+      this.playersStore.setCaptain(player, captain);
+    });
 
-    await channel.subscribe("open", ({ data: { idx } }) => {
+    await channel.subscribe("open", ({ data }) => {
+      if (!isData(data) || !Number.isInteger(data.idx)) return;
+      const idx = data.idx as number;
       console.debug(`broker: received open ${idx} as ${this.username}`);
       this.gameStore.open(idx);
     });
 
-    await channel.subscribe(
-      "setCaptainsTurn",
-      ({ data: { turn } }) => {
-        console.debug(`broker: received setCaptainsTurn ${turn}`);
-        this.playersStore.setCaptainsTurn(turn);
-      },
-    );
+    await channel.subscribe("setCaptainsTurn", ({ data }) => {
+      if (!isData(data) || !Number.isInteger(data.turn)) return;
+      const turn = data.turn as number;
+      console.debug(`broker: received setCaptainsTurn ${turn}`);
+      this.playersStore.setCaptainsTurn(turn);
+    });
 
-    await channel.subscribe("nextGame", ({ data: { mode } }) => {
+    await channel.subscribe("nextGame", ({ data }) => {
+      if (!isData(data)) return;
+      const { mode, turn } = data;
+      if (
+        (mode != "next" && mode != "restart") ||
+        !Number.isInteger(turn) ||
+        (turn as number) <= this.gameStore.turn
+      )
+        return;
+
       console.debug(
         `broker: received nextGame as ${this.username} with mode ${mode}`,
       );
@@ -116,7 +135,7 @@ export class Broker {
           ? this.playersStore.captainsTurn + 1
           : this.playersStore.captainsTurn;
       this.playersStore.newGame(nextCaptainTurn);
-      this.gameStore.buildGame(this.gameStore.turn + 1);
+      this.gameStore.buildGame(turn as number);
     });
 
     await channel.subscribe("globalLogout", () => {
@@ -125,9 +144,10 @@ export class Broker {
       this.playersStore.logout();
     });
 
-    // Any connected peer that receives reqState responds with full state.
-    // The joining client takes the first ackState reply and ignores the rest.
-    const onReqState = ({ data: { from } }: InboundMessage) => {
+    // Peers respond with state; the joining client keeps the newest reply.
+    const onReqState = ({ data }: InboundMessage) => {
+      if (!isData(data) || typeof data.from != "string") return;
+      const { from } = data;
       // Don't respond to our own broadcast (we're the one joining)
       if (from === this.username) return;
       console.debug(
@@ -143,31 +163,44 @@ export class Broker {
       console.debug(
         `broker: publish ackState ${JSON.stringify(state)} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
       );
-      channel.publish("ackState", [state, captainTurn, players]);
+      channel.publish("ackState", [state, captainTurn, players, from]);
     };
     await channel.subscribe("reqState", onReqState);
 
     const onAckState = (msg: InboundMessage) => {
-      if (!msg.data) return;
-      const { turn, state } = msg.data[0] as { turn: number; state: number[] };
+      if (!Array.isArray(msg.data) || !isData(msg.data[0])) return;
+      const { turn, state } = msg.data[0];
       const captainTurn = msg.data[1];
-      const players: { player: string; captain: Captain }[] = msg.data[2] ?? [];
+      const players = msg.data[2] ?? [];
+      const to = msg.data[3];
+      if (
+        to !== this.username ||
+        !Number.isInteger(turn) ||
+        (turn as number) < this.gameStore.turn ||
+        !Array.isArray(state) ||
+        !state.every(Number.isInteger) ||
+        !Number.isInteger(captainTurn) ||
+        !Array.isArray(players)
+      )
+        return;
+
+      const validPlayers = players.filter(
+        (p): p is { player: string; captain: Captain } =>
+          isData(p) && typeof p.player == "string" && isCaptain(p.captain),
+      );
       console.debug(
         `broker: received ackState for turn ${turn} state ${state} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
       );
 
       this.playersStore.$reset();
       this.playersStore.setPlayer(this.username);
-      this.playersStore.newGame(captainTurn);
-      for (const { player, captain } of players) {
+      this.playersStore.newGame(captainTurn as number);
+      for (const { player, captain } of validPlayers) {
         this.playersStore.addPlayer(player, captain);
       }
 
-      this.gameStore.buildGame(turn);
-      this.gameStore.setState(state);
-
-      // Unsubscribe after first reply — ignore any subsequent ackState messages
-      channel.unsubscribe("ackState");
+      this.gameStore.buildGame(turn as number);
+      this.gameStore.setState(state as number[]);
     };
     await channel.subscribe("ackState", onAckState);
 
@@ -198,7 +231,10 @@ export class Broker {
         ? "next"
         : "restart";
     console.debug(`broker: send nextGame with mode ${mode}`);
-    this.getChannel().publish("nextGame", { mode });
+    this.getChannel().publish("nextGame", {
+      mode,
+      turn: this.gameStore.turn + 1,
+    });
   }
 
   nextCaptainsTurn() {
