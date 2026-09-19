@@ -65,16 +65,22 @@ export const usePlayersStore = defineStore("players", () => {
   });
 
   const addPlayer = (p: string, captain: Captain) => {
+    if (!players[p]) return;
+
     players[p].captain = captain;
     players[p].online = true;
   };
 
   const removePlayer = (p: string) => {
+    if (!players[p]) return;
+
     players[p].captain = Captain.None;
     players[p].online = false;
   };
 
   const setPlayer = (p: string) => {
+    if (!players[p]) return;
+
     player.value = p;
     players[p].online = true;
     players[p].captain = Captain.None;
@@ -82,9 +88,10 @@ export const usePlayersStore = defineStore("players", () => {
 
   const setCaptain = (p: string, captain: Captain) => {
     if (
-      captain == Captain.None ||
-      captain == Captain.Red ||
-      captain == Captain.Blue
+      players[p] &&
+      (captain == Captain.None ||
+        captain == Captain.Red ||
+        captain == Captain.Blue)
     ) {
       players[p].captain = captain;
     }
