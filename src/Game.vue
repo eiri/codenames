@@ -5,10 +5,11 @@ import { useRouter } from "vue-router";
 import Info from "@/components/Info.vue";
 import Controls from "@/components/Controls.vue";
 import Screen from "@/components/Screen.vue";
-import { brokerKey, Broker } from "@/plugins/broker";
+import { brokerKey } from "@/plugins/broker";
 
 const router = useRouter();
-const broker = inject<Broker>(brokerKey);
+const broker = inject(brokerKey);
+if (!broker) throw new Error("Missing broker provider");
 
 onMounted(async () => {
   console.debug(`Game: onMounted`);

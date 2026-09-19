@@ -6,9 +6,10 @@ import Toggle from "@/components/Toggle.vue";
 import { useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
 
-import { brokerKey, Broker } from "@/plugins/broker";
+import { brokerKey } from "@/plugins/broker";
 
-const broker = inject<Broker>(brokerKey);
+const broker = inject(brokerKey);
+if (!broker) throw new Error("Missing broker provider");
 
 const { seed, redScore, blueScore, gameOver, hasOpenCards } =
   storeToRefs(useGameStore());

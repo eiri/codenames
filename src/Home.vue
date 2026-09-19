@@ -12,7 +12,7 @@ const router = useRouter();
 const { players } = storeToRefs(usePlayersStore());
 
 const showForm = ref(false);
-const rPwd = ref(null);
+const rPwd = ref<HTMLInputElement | null>(null);
 
 const username = ref("");
 const room = ref("");
@@ -21,7 +21,7 @@ const error = ref("");
 
 const setUser = (user: Player) => {
   showForm.value = true;
-  rPwd.value.focus();
+  rPwd.value?.focus();
   username.value = user.name;
   room.value = "212";
 };

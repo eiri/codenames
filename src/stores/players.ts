@@ -20,6 +20,8 @@ export interface Player {
 
 export const usePlayersStore = defineStore("players", () => {
   const rnd = inject<Rnd>(rndKey);
+  if (!rnd) throw new Error("Missing random provider");
+
   const router = useRouter();
   const player = ref("");
   const captainsTurn = ref(1);
