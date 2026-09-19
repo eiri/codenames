@@ -8,6 +8,7 @@
     "dev": "vite --host --port 5173",
     "build": "vite build",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint -c eslint.config.ts src",
     "dev-test": "vitest --reporter=basic --disable-console-intercept",
     "preview": "vite preview",
