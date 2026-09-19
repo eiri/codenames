@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [vue(), tailwindcss()],
   // https://stackoverflow.com/questions/79879525/installing-the-tailwindcss-vite-plugin-with-vite-8-peer-vite5-2-0-6/79879526#79879526
   css: {
-    lighningcss: {
+    lightningcss: {
       drafts: {
         customMedia: true,
       },
