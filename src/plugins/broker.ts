@@ -1,299 +1,188 @@
-import { AES, Utf8 } from "crypto-es";
-import { Realtime, RealtimeChannel, InboundMessage } from "ably";
-
+import type { RealtimeChannel } from "ably";
 import type { App, InjectionKey } from "vue";
+
 import { GameResult, useGameStore } from "@/stores/game";
 import { Captain, usePlayersStore } from "@/stores/players";
+import { gameMode, nextGame, roomSeed } from "@/plugins/game-flow";
+import {
+  ackStateMsg,
+  indexMsg,
+  nextGameMsg,
+  playerMsg,
+  playerName,
+  stateReq,
+  turnMsg,
+} from "@/plugins/protocol";
+import type { NewGameMode, NextGameMsg } from "@/plugins/protocol";
+import { Transport } from "@/plugins/transport";
 
 type GameStore = ReturnType<typeof useGameStore>;
 type PlayersStore = ReturnType<typeof usePlayersStore>;
-type NewGameMode = "next" | "restart";
-type Data = Record<string, unknown>;
-
-const isData = (data: unknown): data is Data =>
-  typeof data == "object" && data != null;
-
-const isCaptain = (captain: unknown): captain is Captain =>
-  captain == Captain.None || captain == Captain.Red || captain == Captain.Blue;
 
 export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 
 export class Broker {
-  private client: Realtime | null = null;
   private username = "";
-  private channel: RealtimeChannel | null = null;
 
   playersStore: PlayersStore;
   gameStore: GameStore;
 
-  constructor() {
-    console.debug(`broker: init`);
+  constructor(private transport = new Transport()) {
     this.playersStore = usePlayersStore();
     this.gameStore = useGameStore();
   }
 
-  async setClient() {
-    const username = sessionStorage.getItem("username");
-    const password = sessionStorage.getItem("password");
-    if (username == null || password == null) {
-      throw new Error("Missing username or password");
-    }
-    const decrypted = AES.decrypt(
-      import.meta.env.VITE_KEY_CIPHERTEXT,
-      password,
-    );
-    const ablyAPIKey = decrypted.toString(Utf8);
-    if (ablyAPIKey == "") {
-      throw new Error("Invalid API Key");
-    }
-
-    const client = new Realtime({ key: ablyAPIKey, clientId: username });
-    await client.connection.once("connected");
-    this.client = client;
+  async connect() {
+    const { channel, room, username } = await this.transport.connect();
     this.username = username;
-    console.log("broker: connected");
+    this.gameStore.setSeed(roomSeed(new Date(), room));
+    this.playersStore.setPlayer(username);
 
-    return client;
+    await this.subscribe(channel);
+    await channel.publish("playerJoin", {
+      player: username,
+      captain: Captain.None,
+    });
+    await channel.publish("reqState", { from: username });
   }
 
-  async connect() {
-    console.debug(`broker: connect`);
-
-    const room = sessionStorage.getItem("room");
-    if (room == null) {
-      throw new Error("Missing room");
-    }
-
-    const client = await this.setClient();
-    const now = new Date();
-    const seed =
-      now.getFullYear().toString() +
-      (now.getMonth() + 1).toString().padStart(2, "0") +
-      now.getDate().toString().padStart(2, "0") +
-      room;
-    this.gameStore.setSeed(seed);
-    this.playersStore.setPlayer(this.username);
-
-    const channelName = `room:${room}`;
-    const channel = client.channels.get(channelName);
-    this.channel = channel;
-
+  private async subscribe(channel: RealtimeChannel) {
     await channel.subscribe("playerJoin", ({ data }) => {
-      if (!isData(data)) return;
-      const { player, captain } = data;
-      if (typeof player != "string" || !isCaptain(captain)) return;
-      if (player === this.username) return;
-      console.debug(`broker: received playerJoin ${player}`);
-      this.playersStore.addPlayer(player, captain);
+      const msg = playerMsg(data);
+      if (!msg || msg.player == this.username) return;
+
+      this.applyCaptain(msg.player, msg.captain, true);
     });
 
     await channel.subscribe("playerLeave", ({ data }) => {
-      if (!isData(data) || typeof data.player != "string") return;
-      const { player } = data;
-      if (player === this.username) return;
-      console.debug(`broker: received playerLeave ${player}`);
+      const player = playerName(data);
+      if (!player || player == this.username) return;
+
       this.playersStore.removePlayer(player);
     });
 
     await channel.subscribe("setCaptain", ({ data }) => {
-      if (!isData(data)) return;
-      const { player, captain } = data;
-      if (typeof player != "string" || !isCaptain(captain)) return;
-      console.debug(`broker: received setCaptain ${player} -> ${captain}`);
-      this.playersStore.setCaptain(player, captain);
+      const msg = playerMsg(data);
+      if (!msg) return;
+
+      this.applyCaptain(msg.player, msg.captain);
     });
 
     await channel.subscribe("open", ({ data }) => {
-      if (!isData(data) || !Number.isInteger(data.idx)) return;
-      const idx = data.idx as number;
-      console.debug(`broker: received open ${idx} as ${this.username}`);
-      this.gameStore.open(idx);
+      const idx = indexMsg(data);
+      if (idx == null) return;
+
+      this.applyOpen(idx);
     });
 
     await channel.subscribe("setCaptainsTurn", ({ data }) => {
-      if (!isData(data) || !Number.isInteger(data.turn)) return;
-      const turn = data.turn as number;
-      console.debug(`broker: received setCaptainsTurn ${turn}`);
+      const turn = turnMsg(data);
+      if (turn == null) return;
+
       this.playersStore.setCaptainsTurn(turn);
     });
 
     await channel.subscribe("nextGame", ({ data }) => {
-      if (!isData(data)) return;
-      const { mode, turn } = data;
-      if (
-        (mode != "next" && mode != "restart") ||
-        !Number.isInteger(turn) ||
-        (turn as number) <= this.gameStore.turn
-      )
-        return;
+      const msg = nextGameMsg(data);
+      if (!msg) return;
 
-      console.debug(
-        `broker: received nextGame as ${this.username} with mode ${mode}`,
-      );
-      const nextCaptainTurn =
-        mode == "next"
-          ? this.playersStore.captainsTurn + 1
-          : this.playersStore.captainsTurn;
-      this.playersStore.newGame(nextCaptainTurn);
-      this.gameStore.buildGame(turn as number);
+      this.applyNextGame(msg);
     });
 
     await channel.subscribe("globalLogout", () => {
-      console.debug(`broker: received globalLogout as ${this.username}`);
-      this.disconnect();
+      void this.disconnect();
       this.playersStore.logout();
     });
 
-    // Peers respond with state; the joining client keeps the newest reply.
-    const onReqState = ({ data }: InboundMessage) => {
-      if (!isData(data) || typeof data.from != "string") return;
-      const { from } = data;
-      // Don't respond to our own broadcast (we're the one joining)
-      if (from === this.username) return;
-      console.debug(
-        `broker: received reqState from ${from}, publishing ackState`,
-      );
-      const state = this.gameStore.getState();
-      const captainTurn = this.playersStore.captainsTurn;
-      const players = this.playersStore.getPlayers();
-      // FIXME! ok, this is a hack. what I really need to do here is to create a new store for bout (or turn) state
-      // and move all state of turn, captains, desk state, game result in there, so two other stores will be just
-      // "tables" generated from init seed and out store/turn will pull data from there
-      // and manage cursor (aka turn, catainTurn) on there
-      console.debug(
-        `broker: publish ackState ${JSON.stringify(state)} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
-      );
-      channel.publish("ackState", [state, captainTurn, players, from]);
-    };
-    await channel.subscribe("reqState", onReqState);
+    await channel.subscribe("reqState", ({ data }) => {
+      const from = stateReq(data);
+      if (!from || from == this.username) return;
 
-    const onAckState = (msg: InboundMessage) => {
-      if (!Array.isArray(msg.data) || !isData(msg.data[0])) return;
-      const { turn, state } = msg.data[0];
-      const captainTurn = msg.data[1];
-      const players = msg.data[2] ?? [];
-      const to = msg.data[3];
-      if (
-        to !== this.username ||
-        !Number.isInteger(turn) ||
-        (turn as number) < this.gameStore.turn ||
-        !Array.isArray(state) ||
-        !state.every(Number.isInteger) ||
-        !Number.isInteger(captainTurn) ||
-        !Array.isArray(players)
-      )
-        return;
+      channel.publish("ackState", [
+        this.gameStore.getState(),
+        this.playersStore.captainsTurn,
+        this.playersStore.getPlayers(),
+        from,
+      ]);
+    });
 
-      const validPlayers = players.filter(
-        (p): p is { player: string; captain: Captain } =>
-          isData(p) && typeof p.player == "string" && isCaptain(p.captain),
-      );
-      console.debug(
-        `broker: received ackState for turn ${turn} state ${state} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
-      );
+    await channel.subscribe("ackState", ({ data }) => {
+      const state = ackStateMsg(data, this.username, this.gameStore.turn);
+      if (!state) return;
 
       this.playersStore.$reset();
       this.playersStore.setPlayer(this.username);
-      this.playersStore.newGame(captainTurn as number);
-      for (const { player, captain } of validPlayers) {
-        this.playersStore.addPlayer(player, captain);
+      this.playersStore.newGame(state.captainTurn);
+      for (const player of state.players) {
+        this.playersStore.addPlayer(player.player, player.captain);
       }
 
-      this.gameStore.buildGame(turn as number);
-      this.gameStore.setState(state as number[]);
-    };
-    await channel.subscribe("ackState", onAckState);
-
-    console.debug(`broker: publish playerJoin + reqState`);
-    await channel.publish("playerJoin", {
-      player: this.username,
-      captain: Captain.None,
+      this.gameStore.buildGame(state.turn);
+      this.gameStore.setState(state.state);
     });
-    await channel.publish("reqState", { from: this.username });
   }
 
-  private getChannel() {
-    if (!this.channel) throw new Error("Broker is not connected");
+  private applyOpen(idx: number) {
+    this.gameStore.open(idx);
+  }
 
-    return this.channel;
+  private applyCaptain(player: string, captain: Captain, online = false) {
+    if (online) this.playersStore.addPlayer(player, captain);
+    else this.playersStore.setCaptain(player, captain);
+  }
+
+  private applyNextGame(msg: NextGameMsg) {
+    const state = nextGame(
+      this.gameStore.turn,
+      this.playersStore.captainsTurn,
+      msg.mode,
+      msg.turn,
+    );
+    if (!state) return;
+
+    this.playersStore.newGame(state.captainTurn);
+    this.gameStore.buildGame(state.turn);
   }
 
   open(idx: number) {
-    console.debug(`broker: publish open ${idx}`);
-    this.gameStore.open(idx);
-    this.getChannel().publish("open", { idx });
+    this.applyOpen(idx);
+    this.transport.getChannel().publish("open", { idx });
   }
 
   nextGame(gameResult: GameResult) {
-    const mode: NewGameMode =
-      gameResult == GameResult.RedTeamWon ||
-      gameResult == GameResult.BlueTeamWon
-        ? "next"
-        : "restart";
-    console.debug(`broker: send nextGame with mode ${mode}`);
-    this.getChannel().publish("nextGame", {
-      mode,
-      turn: this.gameStore.turn + 1,
-    });
+    const mode: NewGameMode = gameMode(gameResult);
+    const msg = { mode, turn: this.gameStore.turn + 1 };
+    this.applyNextGame(msg);
+    this.transport.getChannel().publish("nextGame", msg);
   }
 
   nextCaptainsTurn() {
     const turn = this.playersStore.captainsTurn + 1;
-    console.debug(`broker: send setCaptainsTurn ${turn}`);
     this.playersStore.setCaptainsTurn(turn);
-    this.getChannel().publish("setCaptainsTurn", { turn });
+    this.transport.getChannel().publish("setCaptainsTurn", { turn });
   }
 
   setCaptain(captain: Captain) {
-    console.debug(`broker: send setCaptain ${captain}`);
-    this.playersStore.setCaptain(this.username, captain);
-    this.getChannel().publish("setCaptain", {
+    this.applyCaptain(this.username, captain);
+    this.transport.getChannel().publish("setCaptain", {
       player: this.username,
       captain,
     });
   }
 
   globalLogout() {
-    console.debug("broker: send globalLogout");
-    this.getChannel().publish("globalLogout", null);
+    this.transport.getChannel().publish("globalLogout", null);
   }
 
   async disconnect() {
-    console.debug(`broker: disconnect`);
-
-    const channel = this.channel;
-    const client = this.client;
-    this.channel = null;
-    this.client = null;
-
-    if (channel) {
-      try {
-        await channel.publish("playerLeave", { player: this.username });
-      } catch (error) {
-        console.warn("broker: failed to publish playerLeave", error);
-      }
-
-      channel.unsubscribe();
-      try {
-        await channel.detach();
-      } catch (error) {
-        console.warn("broker: failed to detach", error);
-      }
-    }
-
+    await this.transport.disconnect(this.username);
     this.gameStore.$reset();
     this.playersStore.$reset();
-
-    if (client) {
-      client.connection.off();
-      client.close();
-    }
   }
 }
 
 export default {
   install(app: App) {
-    const broker = new Broker();
-    app.provide(brokerKey, broker);
+    app.provide(brokerKey, new Broker());
   },
 };
