@@ -4,9 +4,10 @@ import { storeToRefs } from "pinia";
 
 import { GameResult, useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
-import { brokerKey, Broker } from "@/plugins/broker";
+import { brokerKey } from "@/plugins/broker";
 
-const broker = inject<Broker>(brokerKey);
+const broker = inject(brokerKey);
+if (!broker) throw new Error("Missing broker provider");
 
 const room = ref(sessionStorage.getItem("room"));
 const store = useGameStore();

@@ -50,6 +50,8 @@ export class Card {
 
 export const useGameStore = defineStore("game", () => {
   const rnd = inject<Rnd>(rndKey);
+  if (!rnd) throw new Error("Missing random provider");
+
   const boardSize = 25;
   // build round of cards based on board size
   const red = Math.round((boardSize - 1) / 3);

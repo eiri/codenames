@@ -5,9 +5,10 @@ import { storeToRefs } from "pinia";
 import Card from "@/components/Card.vue";
 import { useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
-import { brokerKey, Broker } from "@/plugins/broker";
+import { brokerKey } from "@/plugins/broker";
 
-const broker = inject<Broker>(brokerKey);
+const broker = inject(brokerKey);
+if (!broker) throw new Error("Missing broker provider");
 
 const { board } = storeToRefs(useGameStore());
 const { isCaptainView } = usePlayersStore();

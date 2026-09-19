@@ -12,20 +12,17 @@ type NewGameMode = "next" | "restart";
 export const brokerKey: InjectionKey<Broker> = Symbol("broker");
 
 export class Broker {
-  private client: Realtime;
-  private username: string;
+  private client: Realtime | null = null;
+  private username = "";
+  private channel: RealtimeChannel | null = null;
 
   playersStore: PlayersStore;
   gameStore: GameStore;
-  channel: RealtimeChannel = null;
-  reqStateChannel: RealtimeChannel = null;
 
   constructor() {
     console.debug(`broker: init`);
     this.playersStore = usePlayersStore();
     this.gameStore = useGameStore();
-    this.channel = null;
-    this.reqStateChannel = null;
   }
 
   async setClient() {
@@ -43,10 +40,13 @@ export class Broker {
       throw new Error("Invalid API Key");
     }
 
-    this.client = new Realtime({ key: ablyAPIKey, clientId: username });
-    await this.client.connection.once("connected");
+    const client = new Realtime({ key: ablyAPIKey, clientId: username });
+    await client.connection.once("connected");
+    this.client = client;
     this.username = username;
     console.log("broker: connected");
+
+    return client;
   }
 
   async connect() {
@@ -57,7 +57,7 @@ export class Broker {
       throw new Error("Missing room");
     }
 
-    await this.setClient();
+    const client = await this.setClient();
     const now = new Date();
     const seed =
       now.getFullYear().toString() +
@@ -68,9 +68,10 @@ export class Broker {
     this.playersStore.setPlayer(this.username);
 
     const channelName = `room:${room}`;
-    this.channel = this.client.channels.get(channelName);
+    const channel = client.channels.get(channelName);
+    this.channel = channel;
 
-    await this.channel.subscribe(
+    await channel.subscribe(
       "playerJoin",
       ({ data: { player, captain } }) => {
         if (player === this.username) return;
@@ -79,13 +80,13 @@ export class Broker {
       },
     );
 
-    await this.channel.subscribe("playerLeave", ({ data: { player } }) => {
+    await channel.subscribe("playerLeave", ({ data: { player } }) => {
       if (player === this.username) return;
       console.debug(`broker: received playerLeave ${player}`);
       this.playersStore.removePlayer(player);
     });
 
-    await this.channel.subscribe(
+    await channel.subscribe(
       "setCaptain",
       ({ data: { player, captain } }) => {
         console.debug(`broker: received setCaptain ${player} -> ${captain}`);
@@ -93,12 +94,12 @@ export class Broker {
       },
     );
 
-    await this.channel.subscribe("open", ({ data: { idx } }) => {
+    await channel.subscribe("open", ({ data: { idx } }) => {
       console.debug(`broker: received open ${idx} as ${this.username}`);
       this.gameStore.open(idx);
     });
 
-    await this.channel.subscribe(
+    await channel.subscribe(
       "setCaptainsTurn",
       ({ data: { turn } }) => {
         console.debug(`broker: received setCaptainsTurn ${turn}`);
@@ -106,7 +107,7 @@ export class Broker {
       },
     );
 
-    await this.channel.subscribe("nextGame", ({ data: { mode } }) => {
+    await channel.subscribe("nextGame", ({ data: { mode } }) => {
       console.debug(
         `broker: received nextGame as ${this.username} with mode ${mode}`,
       );
@@ -118,7 +119,7 @@ export class Broker {
       this.gameStore.buildGame(this.gameStore.turn + 1);
     });
 
-    await this.channel.subscribe("globalLogout", () => {
+    await channel.subscribe("globalLogout", () => {
       console.debug(`broker: received globalLogout as ${this.username}`);
       this.disconnect();
       this.playersStore.logout();
@@ -142,9 +143,9 @@ export class Broker {
       console.debug(
         `broker: publish ackState ${JSON.stringify(state)} captainTurn: ${captainTurn} players: ${JSON.stringify(players)}`,
       );
-      this.channel.publish("ackState", [state, captainTurn, players]);
+      channel.publish("ackState", [state, captainTurn, players]);
     };
-    await this.channel.subscribe("reqState", onReqState);
+    await channel.subscribe("reqState", onReqState);
 
     const onAckState = (msg: InboundMessage) => {
       if (!msg.data) return;
@@ -166,22 +167,28 @@ export class Broker {
       this.gameStore.setState(state);
 
       // Unsubscribe after first reply — ignore any subsequent ackState messages
-      this.channel.unsubscribe("ackState");
+      channel.unsubscribe("ackState");
     };
-    await this.channel.subscribe("ackState", onAckState);
+    await channel.subscribe("ackState", onAckState);
 
     console.debug(`broker: publish playerJoin + reqState`);
-    await this.channel.publish("playerJoin", {
+    await channel.publish("playerJoin", {
       player: this.username,
       captain: Captain.None,
     });
-    await this.channel.publish("reqState", { from: this.username });
+    await channel.publish("reqState", { from: this.username });
+  }
+
+  private getChannel() {
+    if (!this.channel) throw new Error("Broker is not connected");
+
+    return this.channel;
   }
 
   open(idx: number) {
     console.debug(`broker: publish open ${idx}`);
     this.gameStore.open(idx);
-    this.channel.publish("open", { idx });
+    this.getChannel().publish("open", { idx });
   }
 
   nextGame(gameResult: GameResult) {
@@ -191,25 +198,28 @@ export class Broker {
         ? "next"
         : "restart";
     console.debug(`broker: send nextGame with mode ${mode}`);
-    this.channel.publish("nextGame", { mode });
+    this.getChannel().publish("nextGame", { mode });
   }
 
   nextCaptainsTurn() {
     const turn = this.playersStore.captainsTurn + 1;
     console.debug(`broker: send setCaptainsTurn ${turn}`);
     this.playersStore.setCaptainsTurn(turn);
-    this.channel.publish("setCaptainsTurn", { turn });
+    this.getChannel().publish("setCaptainsTurn", { turn });
   }
 
   setCaptain(captain: Captain) {
     console.debug(`broker: send setCaptain ${captain}`);
     this.playersStore.setCaptain(this.username, captain);
-    this.channel.publish("setCaptain", { player: this.username, captain });
+    this.getChannel().publish("setCaptain", {
+      player: this.username,
+      captain,
+    });
   }
 
   globalLogout() {
     console.debug("broker: send globalLogout");
-    this.channel.publish("globalLogout", null);
+    this.getChannel().publish("globalLogout", null);
   }
 
   async disconnect() {
