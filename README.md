@@ -2,7 +2,7 @@
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/33bba7d9-ee44-44de-bcb8-fcabb29b59a0/deploy-status)](https://app.netlify.com/sites/friday-game/deploys)
 
-A [Vue3](https://vuejs.org/) + [Ably](https://ably.com/) implementation of [Codenames](https://en.wikipedia.org/wiki/Codenames_\(board_game\)) board game.
+A [Vue3](https://vuejs.org/) + [Ably](https://ably.com/) implementation of [Codenames](<https://en.wikipedia.org/wiki/Codenames_(board_game)>) board game.
 
 ## Motivation
 
@@ -43,9 +43,9 @@ All in all Netlify, as always, is a pleasure to work with, hugely intuitive and 
 
 Run `npm run dev` and open the app on http://localhost:5173 It actually runs on `0.0.0.0`, to test on iPad, and it runs against real Ably account, because
 
-![I don't always test my code, but when I do I, I do it in production.](i_dont_always_test_my_code.jpg)
+![I don't always test my code, but when I do...](i_dont_always_test_my_code_llm.png)
 
-There are not many tests, it's a hobby project, after all.
+There are not many tests.
 
 ## License
 
