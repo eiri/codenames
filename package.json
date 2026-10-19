@@ -6,10 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host --port 5173",
+    "dev:worker": "npm run build && wrangler dev --local",
+    "deploy": "npm run build && wrangler deploy",
     "build": "vite build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint -c eslint.config.ts src",
+    "typecheck": "tsc --noEmit && tsc -p worker/tsconfig.json",
+    "lint": "eslint -c eslint.config.ts src worker",
     "dev-test": "vitest --reporter=basic --disable-console-intercept",
     "preview": "vite preview",
     "convert": "node ./assets/convert.js ./assets/ACB_codenames.txt ./src/assets/words.json",
@@ -27,6 +29,7 @@
     "vue-router": "^5.4.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261016.1",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
@@ -43,7 +46,8 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.1"
   },
   "overrides": {
     "typescript-eslint": {
