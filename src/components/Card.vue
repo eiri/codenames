@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, toRefs } from "vue";
 
-import type { Card } from "@/stores/game";
+import type { Card } from "@/game/types";
+import { isClosed } from "@/game/rules";
 
 interface Props {
   card: Card;
@@ -14,16 +15,16 @@ const props = defineProps<Props>();
 const { card } = toRefs(props);
 
 const open = () => {
-  if (card.value.closed()) {
+  if (isClosed(card.value)) {
     props.open(card.value.idx);
   }
 };
 
 const cardClass = computed(() => {
-  if (!props.isCaptainView && card.value.closed()) {
+  if (!props.isCaptainView && isClosed(card.value)) {
     return "card-3 shadow-md hover:shadow-xl";
   }
-  return `card-${card.value.state} ${card.value.closed() ? "shadow-md hover:shadow-xl" : "shadow-xl"}`;
+  return `card-${card.value.state} ${isClosed(card.value) ? "shadow-md hover:shadow-xl" : "shadow-xl"}`;
 });
 </script>
 
@@ -32,13 +33,13 @@ const cardClass = computed(() => {
     class="animate__animated flex items-center justify-center overflow-hidden rounded-md border border-zinc-400 px-1 text-center shadow-zinc-500/50 transition-transform duration-150"
     :class="[
       cardClass,
-      { animate__flipInY: !card.closed() },
-      { 'cursor-pointer': card.closed() },
+      { animate__flipInY: !isClosed(card) },
+      { 'cursor-pointer': isClosed(card) },
     ]"
     @click="open()"
   >
     <span
-      class="break-words text-[0.6rem] leading-tight sm:text-xs md:text-base lg:text-xl xl:text-3xl"
+      class="wrap-break-words text-[0.6rem] leading-tight sm:text-xs md:text-base lg:text-xl xl:text-3xl"
     >
       {{ card.word }}
     </span>

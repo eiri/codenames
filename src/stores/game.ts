@@ -1,148 +1,49 @@
-import { ref, inject, computed } from "vue";
+import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 
-import { rndKey, Rnd } from "@/plugins/rnd";
-import allWords from "@/assets/words.json";
+import { buildBoard, buildDeck } from "@/game/board";
+import { gameResult, hasOpenCards as anyOpen, openCard, scores } from "@/game/rules";
+import type { Card } from "@/game/types";
 
-export enum GameResult {
-  InProgress = 0,
-  RedTeamWon = 1,
-  BlueTeamWon = 2,
-  BothTeamsLost = 3,
-}
-
-export enum CardState {
-  BlackOpened = 0,
-  BlackClosed = 1,
-  WhiteOpened = 2,
-  WhiteClosed = 3,
-  RedOpened = 4,
-  RedClosed = 5,
-  BlueOpened = 6,
-  BlueClosed = 7,
-}
-
-interface CardOptions {
-  idx: number;
-  word?: string;
-  state?: CardState;
-}
-
-export class Card {
-  idx: number;
-  word: string;
-  state: CardState;
-
-  constructor({
-    idx,
-    word = "...",
-    state = CardState.WhiteClosed,
-  }: CardOptions) {
-    this.idx = idx;
-    this.word = word;
-    this.state = state;
-  }
-
-  closed() {
-    return this.state % 2 == 1;
-  }
-}
+export { CardState, GameResult } from "@/game/types";
+export type { Card } from "@/game/types";
 
 export const useGameStore = defineStore("game", () => {
-  const rnd = inject<Rnd>(rndKey);
-  if (!rnd) throw new Error("Missing random provider");
-
-  const boardSize = 25;
-  // build round of cards based on board size
-  const red = Math.round((boardSize - 1) / 3);
-  const blue = red - 1;
-  const white = boardSize - red - blue - 1;
-  const round = [CardState.BlackClosed]
-    .concat(Array(red).fill(CardState.RedClosed))
-    .concat(Array(blue).fill(CardState.BlueClosed))
-    .concat(Array(white).fill(CardState.WhiteClosed));
   let deck: Card[] = [];
 
   const seed = ref("");
   const turn = ref(1);
   const board = ref<Card[]>([]);
 
-  const redScore = computed(() => {
-    const count = Math.round((boardSize - 1) / 3);
-    const done = board.value.reduce((acc, cur) => {
-      if (cur.state == CardState.RedOpened) acc -= 1;
-      return acc;
-    }, count);
-    return done;
-  });
-
-  const blueScore = computed(() => {
-    const count = Math.round((boardSize - 1) / 3) - 1;
-    const done = board.value.reduce((acc, cur) => {
-      if (cur.state == CardState.BlueOpened) acc -= 1;
-      return acc;
-    }, count);
-    return done;
-  });
-
-  const gameOver = computed(() => {
-    if (board.value.some((cur) => cur.state == CardState.BlackOpened))
-      return GameResult.BothTeamsLost;
-    if (redScore.value == 0) return GameResult.RedTeamWon;
-    if (blueScore.value == 0) return GameResult.BlueTeamWon;
-    return GameResult.InProgress;
-  });
-
-  const hasOpenCards = computed(() =>
-    board.value.some((card) => !card.closed()),
-  );
+  const score = computed(() => scores(board.value));
+  const redScore = computed(() => score.value.red);
+  const blueScore = computed(() => score.value.blue);
+  const gameOver = computed(() => gameResult(board.value));
+  const hasOpenCards = computed(() => anyOpen(board.value));
 
   const setSeed = (newSeed: string) => {
     seed.value = newSeed;
-    deck = [];
-    rnd.mash(seed.value);
-    const dictionary = allWords.slice();
-    rnd.shuffle(dictionary);
-
-    for (let i = 0; i + boardSize <= dictionary.length; i += boardSize) {
-      const words = dictionary.slice(i, i + boardSize);
-      const cards = round.slice();
-      rnd.shuffle(cards);
-      for (const idx of cards.keys()) {
-        deck.push(new Card({ idx, word: words[idx], state: cards[idx] }));
-      }
-    }
-
+    deck = buildDeck(newSeed);
     buildGame(turn.value);
   };
 
-  const getState = () => {
-    return {
-      turn: turn.value,
-      state: board.value.map((c) => c.state),
-    };
-  };
+  const getState = () => ({
+    turn: turn.value,
+    state: board.value.map((card) => card.state),
+  });
 
   const setState = (state: number[]) => {
     board.value.forEach((card, i) => (card.state = state[i]));
   };
 
-  const open = (idx: number) => {
-    if (board.value[idx] && board.value[idx].closed()) {
-      board.value[idx].state -= 1;
-    }
-  };
+  const open = (idx: number) => openCard(board.value, idx);
 
   const buildGame = (nextTurn: number) => {
-    if (!Number.isInteger(nextTurn) || nextTurn < 1 || deck.length == 0) return;
+    const cards = buildBoard(deck, nextTurn);
+    if (cards.length == 0) return;
 
     turn.value = nextTurn;
-    const rounds = deck.length / boardSize;
-    const start = boardSize * ((turn.value - 1) % rounds);
-    const end = start + boardSize;
-    board.value = deck
-      .slice(start, end)
-      .map((card) => new Card({ ...card }));
+    board.value = cards;
   };
 
   const $reset = () => {

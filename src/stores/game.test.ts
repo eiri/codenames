@@ -1,34 +1,24 @@
-import { beforeAll, beforeEach, it, describe, expect } from "vitest";
-import { createApp } from "vue";
-import { setActivePinia, createPinia, storeToRefs } from "pinia";
-import rnd from "@/plugins/rnd";
+import { beforeEach, it, describe, expect } from "vitest";
+import { buildBoard, buildDeck } from "@/game/board";
+import { gameResult, hasOpenCards, isClosed, openCard, scores } from "@/game/rules";
+import { GameResult } from "@/game/types";
+import type { Card } from "@/game/types";
 import dictionary from "@/assets/words.json";
-import { GameResult, useGameStore } from "@/stores/game";
 
-type GameStore = ReturnType<typeof useGameStore>;
-
-describe("Game Store", () => {
-  const app = createApp({});
-  let store: GameStore;
-
-  beforeAll(() => {
-    const pinia = createPinia();
-    app.use(rnd);
-    app.use(pinia);
-    setActivePinia(pinia);
-    store = useGameStore();
-  });
+describe("Game rules", () => {
+  let deck: Card[];
+  let board: Card[];
 
   beforeEach(() => {
-    store.$reset();
-    store.setSeed("20241212212");
+    deck = buildDeck("20241212212");
+    board = buildBoard(deck, 1);
   });
 
   it("Doesn't repeat words for 46 turns", () => {
     const seen = [];
     for (let turn = 1; turn <= 46; turn++) {
-      store.buildGame(turn);
-      for (const card of store.board) {
+      board = buildBoard(deck, turn);
+      for (const card of board) {
         expect(seen).not.toContain(card.word);
         seen.push(card.word);
       }
@@ -36,30 +26,26 @@ describe("Game Store", () => {
   });
 
   it("Wraps after the last full round", () => {
-    store.buildGame(1);
-    const firstRound = store.board.map((card) => card.word);
-    store.open(0);
+    board = buildBoard(deck, 1);
+    const firstRound = board.map((card) => card.word);
+    openCard(board, 0);
 
-    store.buildGame(47);
+    board = buildBoard(deck, 47);
 
-    expect(store.board.map((card) => card.word)).toStrictEqual(firstRound);
-    expect(store.board.every((card) => card.closed())).toBe(true);
+    expect(board.map((card) => card.word)).toStrictEqual(firstRound);
+    expect(board.every((card) => isClosed(card))).toBe(true);
   });
 
   it("Rebuilds the deck when the seed changes", () => {
-    store.buildGame(2);
-    store.setSeed("another-seed");
-    const rebuilt = store.board.map((card) => card.word);
+    const original = buildBoard(deck, 2);
+    deck = buildDeck("another-seed");
+    const rebuilt = buildBoard(deck, 2);
 
-    store.$reset();
-    store.setSeed("another-seed");
-    store.buildGame(2);
-
-    expect(store.board.map((card) => card.word)).toStrictEqual(rebuilt);
+    expect(rebuilt).not.toStrictEqual(original);
+    expect(buildBoard(buildDeck("another-seed"), 2)).toStrictEqual(rebuilt);
   });
 
   it("Has expectred words, offset and limit when shuffled", () => {
-    const { board } = storeToRefs(store);
     const testTable = new Set([
       {
         turn: 1,
@@ -84,54 +70,51 @@ describe("Game Store", () => {
       },
     ]);
     testTable.forEach((test) => {
-      store.buildGame(test.turn);
-      expect(board.value).toHaveLength(test.expect.length);
-      for (let i = 0; i < board.value.length; i++) {
+      board = buildBoard(deck, test.turn);
+      expect(board).toHaveLength(test.expect.length);
+      for (let i = 0; i < board.length; i++) {
         const j = test.expect[i];
-        expect(board.value[i].word).toEqual(dictionary[j]);
+        expect(board[i].word).toEqual(dictionary[j]);
       }
     });
   });
 
   it("Tracks whether cards are open", () => {
-    expect(store.hasOpenCards).toBe(false);
+    expect(hasOpenCards(board)).toBe(false);
 
-    store.open(0);
+    openCard(board, 0);
 
-    expect(store.hasOpenCards).toBe(true);
+    expect(hasOpenCards(board)).toBe(true);
   });
 
   it("Counts score correctly", () => {
-    const { redScore, blueScore } = storeToRefs(store);
     // black 11
     // reds  2 6 8 9 17 19 20 21
     // blues 10 12 13 16 22 23 24
-    store.buildGame(1);
-    expect(redScore.value).toEqual(8);
-    expect(blueScore.value).toEqual(7);
+    board = buildBoard(deck, 1);
+    expect(scores(board).red).toEqual(8);
+    expect(scores(board).blue).toEqual(7);
     // open whites
-    [0, 1, 3, 4].forEach((i) => store.open(i));
-    expect(redScore.value).toEqual(8);
-    expect(blueScore.value).toEqual(7);
+    [0, 1, 3, 4].forEach((i) => openCard(board, i));
+    expect(scores(board).red).toEqual(8);
+    expect(scores(board).blue).toEqual(7);
     // open reds
-    [2, 6, 8, 9].forEach((i) => store.open(i));
+    [2, 6, 8, 9].forEach((i) => openCard(board, i));
     // open blues
-    [10, 12, 13].forEach((i) => store.open(i));
-    expect(redScore.value).toEqual(4);
-    expect(blueScore.value).toEqual(4);
+    [10, 12, 13].forEach((i) => openCard(board, i));
+    expect(scores(board).red).toEqual(4);
+    expect(scores(board).blue).toEqual(4);
     // open all reds
-    [17, 19, 20, 21].forEach((i) => store.open(i));
-    expect(redScore.value).toEqual(0);
-    expect(blueScore.value).toEqual(4);
+    [17, 19, 20, 21].forEach((i) => openCard(board, i));
+    expect(scores(board).red).toEqual(0);
+    expect(scores(board).blue).toEqual(4);
     // open all blues
-    [16, 22, 23, 24].forEach((i) => store.open(i));
-    expect(redScore.value).toEqual(0);
-    expect(blueScore.value).toEqual(0);
+    [16, 22, 23, 24].forEach((i) => openCard(board, i));
+    expect(scores(board).red).toEqual(0);
+    expect(scores(board).blue).toEqual(0);
   });
 
   it("Opens game over correctly", () => {
-    const { gameOver } = storeToRefs(store);
-
     const cases = [
       { expected: GameResult.BothTeamsLost, cards: [11] },
       { expected: GameResult.RedTeamWon, cards: [2, 6, 8, 9, 17, 19, 20, 21] },
@@ -139,14 +122,12 @@ describe("Game Store", () => {
     ];
 
     for (const { expected, cards } of cases) {
-      store.$reset();
-      store.setSeed("20241212212");
-      store.buildGame(1);
+      board = buildBoard(deck, 1);
 
-      expect(gameOver.value).toBe(GameResult.InProgress);
+      expect(gameResult(board)).toBe(GameResult.InProgress);
 
-      cards.forEach((i) => store.open(i));
-      expect(gameOver.value).toBe(expected);
+      cards.forEach((i) => openCard(board, i));
+      expect(gameResult(board)).toBe(expected);
     }
   });
 });

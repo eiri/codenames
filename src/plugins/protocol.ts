@@ -1,6 +1,7 @@
-import { Captain } from "@/stores/players";
+import { Captain } from "@/game/types";
+import type { NewGameMode } from "@/game/types";
 
-export type NewGameMode = "next" | "restart";
+export type { NewGameMode } from "@/game/types";
 export interface PlayerMsg {
   player: string;
   captain: Captain;

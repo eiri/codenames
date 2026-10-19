@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { GameResult } from "@/stores/game";
-import { gameMode, nextGame, roomSeed } from "@/plugins/game-flow";
+import { GameResult } from "@/game/types";
+import { gameMode, nextGame, roomSeed } from "@/game/flow";
 
 describe("game flow", () => {
   it("chooses the next-game mode", () => {
