@@ -6,6 +6,9 @@ node_modules
 .env
 .env.local
 .env.*.local
+.dev.vars
+.dev.vars.*
+.wrangler/
 
 # Log files
 npm-debug.log*
