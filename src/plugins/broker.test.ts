@@ -1,3 +1,4 @@
+import { isClosed } from "@/game/rules";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -146,8 +147,8 @@ describe("Broker", () => {
     akari.setCaptain(Captain.Red);
     akari.nextCaptainsTurn();
     await vi.waitFor(() => {
-      expect(eiri.gameStore.board[0].closed()).toBe(false);
-      expect(akari.gameStore.board[1].closed()).toBe(false);
+      expect(isClosed(eiri.gameStore.board[0])).toBe(false);
+      expect(isClosed(akari.gameStore.board[1])).toBe(false);
       expect(eiri.playersStore.players.Akari.captain).toBe(Captain.Red);
       expect(eiri.playersStore.captainsTurn).toBe(2);
     });

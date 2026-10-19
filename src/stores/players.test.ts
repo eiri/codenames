@@ -4,6 +4,8 @@ import { setActivePinia, createPinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
 import rnd from "@/plugins/rnd";
 import { Captain, usePlayersStore } from "./players";
+import { nextCaptains } from "@/game/captains";
+import { roster } from "@/game/roster";
 
 type PlayersStore = ReturnType<typeof usePlayersStore>;
 
@@ -28,7 +30,7 @@ describe("Game Store", () => {
     const seed = "20241212212";
     const seen = [];
     for (let turn = 1; turn <= 5; turn++) {
-      const pair = store.nextCaptains(seed, turn);
+      const pair = nextCaptains(seed, turn, Object.keys(roster));
       expect(seen).not.toContain(pair.join(":"));
       seen.push(pair.join(":"));
     }

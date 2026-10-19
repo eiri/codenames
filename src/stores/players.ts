@@ -1,68 +1,32 @@
-import { ref, inject, reactive } from "vue";
+import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { defineStore } from "pinia";
 
-import { rndKey, Rnd } from "@/plugins/rnd";
+import { nextCaptains as suggestCaptains } from "@/game/captains";
+import { roster } from "@/game/roster";
+import type { RosterEntry } from "@/game/roster";
+import { Captain } from "@/game/types";
 
-export enum Captain {
-  None = 0,
-  Red = 1,
-  Blue = 2,
-}
+export { Captain } from "@/game/types";
 
-export interface Player {
-  name: string;
-  lj: string;
-  avatar: string;
+export interface Player extends RosterEntry {
   captain: Captain;
   online: boolean;
 }
 
 export const usePlayersStore = defineStore("players", () => {
-  const rnd = inject<Rnd>(rndKey);
-  if (!rnd) throw new Error("Missing random provider");
-
   const router = useRouter();
   const player = ref("");
   const captainsTurn = ref(1);
 
-  const players = reactive<Record<string, Player>>({
-    Akari: {
-      name: "Akari",
-      lj: "akari_chan",
-      avatar: "https://l-userpic.livejournal.com/120407741/755293",
-      captain: Captain.None,
-      online: false,
-    },
-    Eiri: {
-      name: "Eiri",
-      lj: "eiri",
-      avatar: "https://l-userpic.livejournal.com/38941189/689880", // https://l-userpic.livejournal.com/127274177/689880
-      captain: Captain.None,
-      online: false,
-    },
-    Ikadell: {
-      name: "Ikadell",
-      lj: "ikadell",
-      avatar: "https://l-userpic.livejournal.com/11807164/1840678",
-      captain: Captain.None,
-      online: false,
-    },
-    Friday: {
-      name: "Friday",
-      lj: "next_friday",
-      avatar: "https://l-userpic.livejournal.com/57379634/818233",
-      captain: Captain.None,
-      online: false,
-    },
-    Vitaliy: {
-      name: "Vitaliy",
-      lj: "seminarist",
-      avatar: "https://l-userpic.livejournal.com/45172718/788486",
-      captain: Captain.None,
-      online: false,
-    },
-  });
+  const players = reactive<Record<string, Player>>(
+    Object.fromEntries(
+      Object.entries(roster).map(([username, entry]) => [
+        username,
+        { ...entry, captain: Captain.None, online: false },
+      ]),
+    ),
+  );
 
   const addPlayer = (p: string, captain: Captain) => {
     if (!players[p]) return;
@@ -137,13 +101,8 @@ export const usePlayersStore = defineStore("players", () => {
     if (Number.isInteger(turn) && turn > 0) captainsTurn.value = turn;
   };
 
-  const nextCaptains = (seed: string, turn: number): [string, string] => {
-    rnd.mash(seed);
-    const names = Object.keys(players);
-    rnd.shuffle(names);
-    const index = ((turn - 1) % names.length) * 2;
-    return [names[index % names.length], names[(index + 1) % names.length]];
-  };
+  const nextCaptains = (seed: string, turn: number): [string, string] =>
+    suggestCaptains(seed, turn, Object.keys(roster));
 
   const logout = () => {
     router.push("/");

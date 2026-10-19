@@ -9,7 +9,7 @@ import Controls from "@/components/Controls.vue";
 import Toggle from "@/components/Toggle.vue";
 import { brokerKey } from "@/plugins/broker";
 import rnd from "@/plugins/rnd";
-import { Card, CardState, useGameStore } from "@/stores/game";
+import { CardState, useGameStore } from "@/stores/game";
 
 const makeRouter = () =>
   createRouter({
@@ -20,7 +20,7 @@ const makeRouter = () =>
 describe("Card", () => {
   it("opens a closed card once", async () => {
     const open = vi.fn();
-    const card = new Card({ idx: 2, word: "test", state: CardState.WhiteClosed });
+    const card = { idx: 2, word: "test", state: CardState.WhiteClosed };
     const wrapper = mount(CardView, { props: { card, open } });
 
     await wrapper.trigger("click");
