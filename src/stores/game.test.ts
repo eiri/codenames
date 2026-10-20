@@ -1,7 +1,7 @@
 import { beforeEach, it, describe, expect } from "vitest";
 import { buildBoard, buildDeck } from "@/game/board";
 import { gameResult, hasOpenCards, isClosed, openCard, scores } from "@/game/rules";
-import { GameResult } from "@/game/types";
+import { CardState, GameResult } from "@/game/types";
 import type { Card } from "@/game/types";
 import dictionary from "@/assets/words.json";
 
@@ -10,124 +10,98 @@ describe("Game rules", () => {
   let board: Card[];
 
   beforeEach(() => {
-    deck = buildDeck("20241212212");
+    deck = buildDeck();
     board = buildBoard(deck, 1);
   });
 
   it("Doesn't repeat words for 46 turns", () => {
-    const seen = [];
+    const seen = new Set<string>();
     for (let turn = 1; turn <= 46; turn++) {
       board = buildBoard(deck, turn);
       for (const card of board) {
-        expect(seen).not.toContain(card.word);
-        seen.push(card.word);
+        expect(seen.has(card.word)).toBe(false);
+        seen.add(card.word);
       }
     }
   });
 
-  it("Wraps after the last full round", () => {
-    board = buildBoard(deck, 1);
-    const firstRound = board.map((card) => card.word);
+  it("Wraps after the last full round without changing the deck", () => {
+    const firstRound = structuredClone(board);
     openCard(board, 0);
-
     board = buildBoard(deck, 47);
 
-    expect(board.map((card) => card.word)).toStrictEqual(firstRound);
-    expect(board.every((card) => isClosed(card))).toBe(true);
+    expect(board).toStrictEqual(firstRound);
+    expect(board.every(isClosed)).toBe(true);
   });
 
-  it("Rebuilds the deck when the seed changes", () => {
-    const original = buildBoard(deck, 2);
-    deck = buildDeck("another-seed");
-    const rebuilt = buildBoard(deck, 2);
-
-    expect(rebuilt).not.toStrictEqual(original);
-    expect(buildBoard(buildDeck("another-seed"), 2)).toStrictEqual(rebuilt);
-  });
-
-  it("Has expectred words, offset and limit when shuffled", () => {
-    const testTable = new Set([
-      {
-        turn: 1,
-        expect: [
-          400, 1071, 606, 130, 642, 45, 1069, 1105, 132, 653, 815, 889, 866,
-          972, 117, 229, 515, 1007, 1046, 528, 720, 152, 65, 517, 901,
-        ],
-      },
-      {
-        turn: 3,
-        expect: [
-          774, 103, 1114, 173, 133, 437, 432, 468, 358, 250, 13, 885, 974, 323,
-          193, 1028, 785, 431, 1144, 579, 470, 523, 714, 368, 502,
-        ],
-      },
-      {
-        turn: 2,
-        expect: [
-          17, 639, 1126, 227, 1038, 347, 656, 338, 428, 118, 620, 525, 1089,
-          661, 604, 709, 1051, 473, 902, 201, 170, 609, 686, 961, 233,
-        ],
-      },
-    ]);
-    testTable.forEach((test) => {
-      board = buildBoard(deck, test.turn);
-      expect(board).toHaveLength(test.expect.length);
-      for (let i = 0; i < board.length; i++) {
-        const j = test.expect[i];
-        expect(board[i].word).toEqual(dictionary[j]);
+  it("Builds fresh decks with the same card distribution", () => {
+    const fresh = buildDeck();
+    expect(fresh).not.toStrictEqual(deck);
+    for (let turn = 1; turn <= fresh.length / 25; turn++) {
+      const cards = buildBoard(fresh, turn);
+      for (const [state, count] of [
+        [CardState.BlackClosed, 1], [CardState.RedClosed, 8],
+        [CardState.BlueClosed, 7], [CardState.WhiteClosed, 9],
+      ]) {
+        expect(cards.filter((card) => card.state == state)).toHaveLength(count);
       }
-    });
+    }
   });
 
-  it("Tracks whether cards are open", () => {
+  it("Preserves shuffled word order, offset, and limit", () => {
+    const reverse = <T>(list: T[]) => { list.reverse(); };
+    deck = buildDeck(reverse);
+    const words = dictionary.slice().reverse();
+    for (const turn of [1, 3, 2]) {
+      board = buildBoard(deck, turn);
+      expect(board.map((card) => card.word)).toEqual(words.slice((turn - 1) * 25, turn * 25));
+      expect(board.map((card) => card.idx)).toEqual(Array.from({ length: 25 }, (_, idx) => idx));
+    }
+  });
+
+  it("Opens a card only once and ignores invalid indexes", () => {
     expect(hasOpenCards(board)).toBe(false);
-
+    const closedState = board[0].state;
+    for (const idx of [-1, 25, 0.5, NaN]) openCard(board, idx);
+    expect(hasOpenCards(board)).toBe(false);
     openCard(board, 0);
-
+    openCard(board, 0);
+    expect(board[0].state).toBe(closedState - 1);
     expect(hasOpenCards(board)).toBe(true);
   });
 
   it("Counts score correctly", () => {
-    // black 11
-    // reds  2 6 8 9 17 19 20 21
-    // blues 10 12 13 16 22 23 24
-    board = buildBoard(deck, 1);
-    expect(scores(board).red).toEqual(8);
-    expect(scores(board).blue).toEqual(7);
-    // open whites
-    [0, 1, 3, 4].forEach((i) => openCard(board, i));
-    expect(scores(board).red).toEqual(8);
-    expect(scores(board).blue).toEqual(7);
-    // open reds
-    [2, 6, 8, 9].forEach((i) => openCard(board, i));
-    // open blues
-    [10, 12, 13].forEach((i) => openCard(board, i));
-    expect(scores(board).red).toEqual(4);
-    expect(scores(board).blue).toEqual(4);
-    // open all reds
-    [17, 19, 20, 21].forEach((i) => openCard(board, i));
-    expect(scores(board).red).toEqual(0);
-    expect(scores(board).blue).toEqual(4);
-    // open all blues
-    [16, 22, 23, 24].forEach((i) => openCard(board, i));
-    expect(scores(board).red).toEqual(0);
-    expect(scores(board).blue).toEqual(0);
+    const reds = board.filter((card) => card.state == CardState.RedClosed);
+    const blues = board.filter((card) => card.state == CardState.BlueClosed);
+    expect(scores(board)).toEqual({ red: 8, blue: 7 });
+
+    // Neutral cards do not affect either score.
+    board.filter((card) => card.state == CardState.WhiteClosed)
+      .forEach((card) => openCard(board, card.idx));
+    expect(scores(board)).toEqual({ red: 8, blue: 7 });
+
+    reds.slice(0, 4).forEach((card) => openCard(board, card.idx));
+    blues.slice(0, 3).forEach((card) => openCard(board, card.idx));
+    expect(scores(board)).toEqual({ red: 4, blue: 4 });
+    reds.forEach((card) => openCard(board, card.idx));
+    expect(scores(board)).toEqual({ red: 0, blue: 4 });
+    blues.forEach((card) => openCard(board, card.idx));
+    expect(scores(board)).toEqual({ red: 0, blue: 0 });
   });
 
-  it("Opens game over correctly", () => {
-    const cases = [
-      { expected: GameResult.BothTeamsLost, cards: [11] },
-      { expected: GameResult.RedTeamWon, cards: [2, 6, 8, 9, 17, 19, 20, 21] },
-      { expected: GameResult.BlueTeamWon, cards: [10, 12, 13, 16, 22, 23, 24] },
-    ];
-
-    for (const { expected, cards } of cases) {
+  it("Calculates game results with the assassin taking precedence", () => {
+    for (const [state, expected] of [
+      [CardState.BlackClosed, GameResult.BothTeamsLost],
+      [CardState.RedClosed, GameResult.RedTeamWon],
+      [CardState.BlueClosed, GameResult.BlueTeamWon],
+    ]) {
       board = buildBoard(deck, 1);
-
       expect(gameResult(board)).toBe(GameResult.InProgress);
-
-      cards.forEach((i) => openCard(board, i));
+      board.filter((card) => card.state == state).forEach((card) => openCard(board, card.idx));
       expect(gameResult(board)).toBe(expected);
+      const assassin = board.find((card) => card.state == CardState.BlackClosed);
+      if (assassin) openCard(board, assassin.idx);
+      expect(gameResult(board)).toBe(GameResult.BothTeamsLost);
     }
   });
 });

@@ -27,5 +27,3 @@ export enum Captain {
   Red = 1,
   Blue = 2,
 }
-
-export type NewGameMode = "next" | "restart";

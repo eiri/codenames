@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, toRefs } from "vue";
 
-import type { Card } from "@/game/types";
-import { isClosed } from "@/game/rules";
+import type { CardSnapshot } from "@/game/snapshot";
 
 interface Props {
-  card: Card;
-  isCaptainView?: boolean;
+  card: CardSnapshot;
+  disabled?: boolean;
   open: (idx: number) => void;
 }
 
@@ -15,16 +14,15 @@ const props = defineProps<Props>();
 const { card } = toRefs(props);
 
 const open = () => {
-  if (isClosed(card.value)) {
+  if (!props.disabled && !card.value.open) {
     props.open(card.value.idx);
   }
 };
 
 const cardClass = computed(() => {
-  if (!props.isCaptainView && isClosed(card.value)) {
-    return "card-3 shadow-md hover:shadow-xl";
-  }
-  return `card-${card.value.state} ${isClosed(card.value) ? "shadow-md hover:shadow-xl" : "shadow-xl"}`;
+  const colors = { black: 0, white: 2, red: 4, blue: 6 };
+  const state = card.value.color == null ? 3 : colors[card.value.color] + (card.value.open ? 0 : 1);
+  return `card-${state} ${card.value.open ? "shadow-xl" : "shadow-md hover:shadow-xl"}`;
 });
 </script>
 
@@ -33,8 +31,8 @@ const cardClass = computed(() => {
     class="animate__animated flex items-center justify-center overflow-hidden rounded-md border border-zinc-400 px-1 text-center shadow-zinc-500/50 transition-transform duration-150"
     :class="[
       cardClass,
-      { animate__flipInY: !isClosed(card) },
-      { 'cursor-pointer': isClosed(card) },
+      { animate__flipInY: card.open },
+      { 'cursor-pointer': !card.open && !disabled },
     ]"
     @click="open()"
   >

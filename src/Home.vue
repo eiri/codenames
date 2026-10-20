@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { SHA256 } from "crypto-es";
-
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 
-import { Player, usePlayersStore } from "@/stores/players";
+import { usePlayersStore } from "@/stores/players";
+import type { Player } from "@/stores/players";
+import { useSessionStore } from "@/stores/session";
 
 const router = useRouter();
+const session = useSessionStore();
+const pending = ref(false);
 
 const { players } = storeToRefs(usePlayersStore());
 
@@ -22,11 +24,11 @@ const error = ref("");
 const setUser = (user: Player) => {
   showForm.value = true;
   rPwd.value?.focus();
-  username.value = user.name;
+  username.value = user.username;
   room.value = "212";
 };
 
-const login = () => {
+const login = async () => {
   if (username.value == "") {
     error.value = `Missing username`;
     return false;
@@ -35,30 +37,41 @@ const login = () => {
     error.value = `Missing room`;
     return false;
   }
-  if (password.value == "") {
+  if (password.value == "" && session.username != username.value) {
     error.value = `Missing password`;
     return false;
   }
 
-  if (SHA256(password.value).toString() != import.meta.env.VITE_KEY_CHECKSUM) {
-    error.value = `Invalid password`;
-    return false;
+  if (!/^[A-Za-z0-9_-]{1,32}$/.test(room.value)) {
+    error.value = "Use 1 to 32 letters, digits, underscores, or hyphens for the room";
+    return;
   }
+  if (pending.value) return;
 
   error.value = "";
-  // store values for connect
-  sessionStorage.clear();
-  sessionStorage.setItem("room", room.value);
-  sessionStorage.setItem("username", username.value);
-  sessionStorage.setItem("password", password.value);
-
-  router.push(`/room/${room.value}`);
+  pending.value = true;
+  try {
+    if (session.username != username.value || password.value) {
+      await session.login(username.value, password.value);
+    }
+    await router.push(`/room/${room.value}`);
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : "Login failed";
+  } finally {
+    password.value = "";
+    pending.value = false;
+  }
 };
 
-onMounted(() => {
-  // remove old stored values
-  console.debug("Home: onMounted");
-  sessionStorage.clear();
+onMounted(async () => {
+  try {
+    await session.restore();
+    if (session.username && players.value[session.username]) {
+      setUser(players.value[session.username]);
+    }
+  } catch {
+    error.value = "Cannot reach the login service";
+  }
 });
 </script>
 
@@ -92,10 +105,10 @@ onMounted(() => {
           <img
             class="avatar ring-zinc-400 mr-3 mb-3"
             :class="{
-              'ring-zinc-200': username == player.name,
+              'ring-zinc-200': username == player.username,
             }"
             v-for="player in players"
-            :key="player.name"
+            :key="player.username"
             :src="player.avatar"
             :alt="player.name"
             @click="setUser(player)"
@@ -124,19 +137,20 @@ onMounted(() => {
           />
 
           <input
-            type="text"
+            type="password"
             class="input"
             placeholder="Password"
-            autocomplete="off"
+            autocomplete="current-password"
             ref="rPwd"
             id="password"
-            v-model.lazy.trim="password"
+            v-model="password"
           />
 
           <div class="pt-3 flex items-center justify-center">
             <button
               class="rounded-xl bg-cyan-500/50 px-10 py-2 text-white shadow-xl shadow-cyan-800/50 backdrop-blur-md transition-colors duration-300 hover:bg-cyan-600 active:scale-[.97]"
               role="button"
+              :disabled="pending"
             >
               Enter
             </button>
