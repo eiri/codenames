@@ -225,8 +225,12 @@ try {
   await until(() => !last(captainSocket).players.find((player) => player.username == other).online);
   ordinarySocket = await connectSocket(other);
 
+  // Taking red through the legacy toggle also removes the previous captain's view.
   let reply = await socketCommand(ordinarySocket, { type: "toggleCaptain" });
   assert.ok(reply.snapshot.board.every((card) => card.color !== null));
+  assert.equal(reply.snapshot.players.find((player) => player.username == captain).captain, 0);
+  await until(() => last(captainSocket).revision == reply.snapshot.revision);
+  assert.ok(last(captainSocket).board.every((card) => card.color === null));
   reply = await socketCommand(ordinarySocket, { type: "toggleCaptain" });
   assert.ok(reply.snapshot.board.every((card) => card.color === null));
   await until(() => last(captainSocket).revision == reply.snapshot.revision);
@@ -279,6 +283,25 @@ try {
   const blueCaptain = await socketCommand(captainSocket, { type: "setCaptain", captain: 2 });
   assert.equal(blueCaptain.snapshot.players.find((player) => player.username == captain).captain, 2);
   assert.ok(blueCaptain.snapshot.board.every((card) => card.color !== null));
+  // Each team has one holder; switching teams clears both the old role and the displaced holder.
+  await until(() => last(ordinarySocket).revision == blueCaptain.snapshot.revision);
+  reply = await socketCommand(ordinarySocket, { type: "setCaptain", captain: 1 });
+  assert.equal(reply.snapshot.players.find((player) => player.username == captain).captain, 2);
+  assert.equal(reply.snapshot.players.filter((player) => player.captain == 1).length, 1);
+  reply = await socketCommand(ordinarySocket, { type: "setCaptain", captain: 2 });
+  assert.equal(reply.snapshot.players.find((player) => player.username == captain).captain, 0);
+  assert.equal(reply.snapshot.players.filter((player) => player.captain == 1).length, 0);
+  assert.equal(reply.snapshot.players.filter((player) => player.captain == 2).length, 1);
+  await until(() => last(captainSocket).revision == reply.snapshot.revision);
+  assert.ok(last(captainSocket).board.filter((card) => !card.open).every((card) => card.color === null));
+
+  // Stale selections cannot displace the current captain.
+  state = await send(captain, { type: "setCaptain", captain: 2, revision: blueCaptain.snapshot.revision }, 409);
+  assert.equal(state.players.find((player) => player.username == other).captain, 2);
+  state = await send(captain, { type: "setCaptain", captain: 2, revision: state.revision });
+  await until(() => last(ordinarySocket).revision == state.revision);
+  assert.ok(last(ordinarySocket).board.filter((card) => !card.open).every((card) => card.color === null));
+  assert.equal(last(ordinarySocket).players.find((player) => player.username == other).captain, 0);
   const durable = await send(captain);
   await stop();
   await start();

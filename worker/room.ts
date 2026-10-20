@@ -209,11 +209,21 @@ export class Room extends DurableObject<Env> {
         openCard(next.board, command.idx);
         break;
       case "toggleCaptain":
-        next.captainViews[username] = next.captainViews[username] ? Captain.None : Captain.Red;
+      case "setCaptain": {
+        const captain = command.type == "setCaptain" ? command.captain :
+          next.captainViews[username] ? Captain.None : Captain.Red;
+
+        // A new selection replaces every holder, including legacy boolean roles.
+        if (captain != Captain.None) {
+          for (const [name, selected] of Object.entries(next.captainViews)) {
+            if ((selected === true ? Captain.Red : selected) == captain) {
+              next.captainViews[name] = Captain.None;
+            }
+          }
+        }
+        next.captainViews[username] = captain;
         break;
-      case "setCaptain":
-        next.captainViews[username] = command.captain;
-        break;
+      }
       case "advanceCaptains":
         next.captainTurn += 1;
         break;
