@@ -16,17 +16,13 @@
     "lint": "eslint -c eslint.config.ts src worker",
     "dev-test": "vitest --reporter=basic --disable-console-intercept",
     "preview": "vite preview",
-    "convert": "node ./assets/convert.js ./assets/ACB_codenames.txt ./src/assets/words.json",
-    "encrypt": "node --import=specifier-resolution-node/register ./assets/encrypt.js"
+    "convert": "node ./assets/convert.js ./assets/ACB_codenames.txt ./src/assets/words.json"
   },
   "dependencies": {
     "@fontsource-variable/playfair": "^5.3.0",
     "@fontsource-variable/source-sans-3": "^5.3.1",
-    "ably": "^2.5.0",
     "animate.css": "^4.1.1",
-    "crypto-es": "^3.1.3",
     "pinia": "^4.1.0",
-    "specifier-resolution-node": "^1.1.4",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0"
   },
@@ -38,7 +34,6 @@
     "@types/node": "^26.6.5",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/test-utils": "^2.5.1",
-    "dotenv": "^18.0.8",
     "eslint": "^10.13.0",
     "eslint-plugin-vue": "^10.11.1",
     "globals": "^17.13.0",

@@ -25,14 +25,8 @@ jobs:
       - name: Install deps
         run: npm ci --no-audit
       - name: Build package
-        env:
-          VITE_KEY_CHECKSUM: ${{ secrets.VITE_KEY_CHECKSUM }}
-          VITE_KEY_CIPHERTEXT: ${{ secrets.VITE_KEY_CIPHERTEXT }}
         run: npm run build
       - name: Run tests
-        env:
-          VITE_KEY_CHECKSUM: ${{ secrets.VITE_KEY_CHECKSUM }}
-          VITE_KEY_CIPHERTEXT: ${{ secrets.VITE_KEY_CIPHERTEXT }}
         run: npm run test
       - name: Run type check
         run: npm run typecheck
