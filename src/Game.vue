@@ -15,7 +15,7 @@ const broker = inject(brokerKey);
 if (!broker) throw new Error("Missing broker provider");
 
 const session = useSessionStore();
-const { connected, pending, error } = storeToRefs(useGameStore());
+const { pending, error } = storeToRefs(useGameStore());
 const ready = ref(false);
 let active = true;
 
@@ -62,9 +62,6 @@ onUnmounted(() => {
   <header v-if="ready" class="p-2 shadow-md sm:p-4">
     <Info @logout="logout" />
   </header>
-  <p class="px-4 font-sans" role="status">
-    {{ error || (!connected ? "Disconnected. Waiting for the room..." : "") }}
-  </p>
   <main class="p-2 sm:p-4" :aria-busy="pending"><Screen /></main>
   <footer v-if="ready" class="px-2 pt-6 sm:px-4 sm:pt-12"><Controls /></footer>
 </template>

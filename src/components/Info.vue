@@ -15,7 +15,8 @@ defineEmits<{ logout: [] }>();
 const route = useRoute();
 const room = computed(() => route.params.room);
 const store = useGameStore();
-const { turn, redScore, blueScore, gameOver, canMutate } = storeToRefs(store);
+const { turn, redScore, blueScore, gameOver, canMutate, connected, error } =
+  storeToRefs(store);
 
 const playersStore = usePlayersStore();
 const { players, captainsTurn } = storeToRefs(playersStore);
@@ -50,7 +51,13 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
       </svg>
     </div>
     <div>{{ room }}</div>
-    <button type="button" class="pl-3 cursor-pointer" aria-label="New shuffle" :disabled="!canMutate" @click="broker.newShuffle()">
+    <button
+      type="button"
+      class="pl-3 cursor-pointer"
+      aria-label="New shuffle"
+      :disabled="!canMutate"
+      @click="broker.newShuffle()"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="w-8 h-8 fill-teal-700"
@@ -62,7 +69,13 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
       </svg>
     </button>
     <div>{{ turn }}</div>
-    <button type="button" class="pl-3 cursor-pointer" aria-label="Advance captain suggestions" :disabled="!canMutate" @click="nextCaptainTurn()">
+    <button
+      type="button"
+      class="pl-3 cursor-pointer"
+      aria-label="Advance captain suggestions"
+      :disabled="!canMutate"
+      @click="nextCaptainTurn()"
+    >
       <svg
         viewBox="0 0 512 512"
         class="w-8 h-8 fill-teal-700"
@@ -94,6 +107,9 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
     >
       {{ gameResult }}
     </div>
+    <p class="pl-3 text-base" role="status">
+      {{ error || (!connected ? "Disconnected. Waiting for the room..." : "") }}
+    </p>
     <div class="flex-auto">
       <div class="flex justify-end -space-x-1.5">
         <div
@@ -124,7 +140,12 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
       </div>
     </div>
     <div class="pl-5">
-      <button type="button" class="cursor-pointer" aria-label="Log out" @click="$emit('logout')">
+      <button
+        type="button"
+        class="cursor-pointer"
+        aria-label="Log out"
+        @click="$emit('logout')"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-8 h-8 fill-teal-700"
