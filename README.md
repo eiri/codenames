@@ -1,8 +1,6 @@
 # Codenames
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/33bba7d9-ee44-44de-bcb8-fcabb29b59a0/deploy-status)](https://app.netlify.com/sites/friday-game/deploys)
-
-A [Vue3](https://vuejs.org/) + [Ably](https://ably.com/) implementation of [Codenames](<https://en.wikipedia.org/wiki/Codenames_(board_game)>) board game.
+A [Vue3](https://vuejs.org/) + [Cloudflare workers](https://www.cloudflare.com/products/workers/) implementation of [Codenames](<https://en.wikipedia.org/wiki/Codenames_(board_game)>) board game.
 
 ## Motivation
 
