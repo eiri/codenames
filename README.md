@@ -12,11 +12,11 @@ Just a quick hobby project for me and my friends.
 
 ## Building
 
-Call `git clone` and then `npm install` to get the deps, then run npm run build. The build tool is [Vite](https://vitejs.dev/), the compiled code goes into `/dist`.
+Call `git clone` and then `npm install` to get the deps, then run `npm run build`. The build tool is [Vite](https://vitejs.dev/), the compiled code goes into `/dist`.
 
 ## Deployment
 
-tbd
+[Deployment guide](DEPLOYMENT.md)
 
 ## Development
 
