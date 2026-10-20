@@ -1,116 +1,36 @@
-import { beforeAll, beforeEach, it, describe, expect } from "vitest";
-import { createApp } from "vue";
-import { setActivePinia, createPinia } from "pinia";
-import { createMemoryHistory, createRouter } from "vue-router";
-import rnd from "@/plugins/rnd";
-import { Captain, usePlayersStore } from "./players";
+import { createPinia, setActivePinia } from "pinia";
+import { beforeEach, describe, expect, it } from "vitest";
+import { usePlayersStore } from "./players";
 import { nextCaptains } from "@/game/captains";
-import { roster } from "@/game/roster";
+import { roomSnapshot } from "@/test/fixtures";
 
-type PlayersStore = ReturnType<typeof usePlayersStore>;
+beforeEach(() => setActivePinia(createPinia()));
 
-describe("Game Store", () => {
-  const app = createApp({});
-  let store: PlayersStore;
-
-  beforeAll(() => {
-    const pinia = createPinia();
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: [{ path: "/", component: { template: "<div />" } }],
-    });
-    app.use(rnd);
-    app.use(router);
-    app.use(pinia);
-    setActivePinia(pinia);
-    store = usePlayersStore();
+describe("Players", () => {
+  it("does not repeat captain pairs for five turns", () => {
+    const order = ["Friday", "Eiri", "Vitaliy", "Akari", "Ikadell"];
+    const pairs = Array.from({ length: 5 }, (_, idx) => nextCaptains(order, idx + 1).join(":"));
+    expect(pairs).toEqual(["Friday:Eiri", "Vitaliy:Akari", "Ikadell:Friday", "Eiri:Vitaliy", "Akari:Ikadell"]);
   });
 
-  it("Doesn't repeat captain pairs for 5 turns", () => {
-    const seed = "20241212212";
-    const seen = [];
-    for (let turn = 1; turn <= 5; turn++) {
-      const pair = nextCaptains(seed, turn, Object.keys(roster));
-      expect(seen).not.toContain(pair.join(":"));
-      seen.push(pair.join(":"));
-    }
-    // consistent rand
-    expect(seen).toStrictEqual([
-      "Friday:Eiri",
-      "Vitaliy:Akari",
-      "Ikadell:Friday",
-      "Eiri:Vitaliy",
-      "Akari:Ikadell",
-    ]);
-  });
-
-  it("sets a valid captain turn", () => {
-    store.setCaptainsTurn(3);
-    expect(store.captainsTurn).toBe(3);
-
-    store.setCaptainsTurn(0);
-    expect(store.captainsTurn).toBe(3);
-  });
-
-  describe("getPlayers", () => {
-    beforeEach(() => {
-      store.$reset();
-    });
-
-    it("returns empty array when no players are online", () => {
-      expect(store.getPlayers()).toStrictEqual([]);
-    });
-
-    it("returns only online players", () => {
-      store.addPlayer("Akari", Captain.None);
-      store.addPlayer("Eiri", Captain.None);
-
-      const result = store.getPlayers();
-      expect(result).toHaveLength(2);
-      expect(result).toContainEqual({ player: "Akari", captain: Captain.None });
-      expect(result).toContainEqual({ player: "Eiri", captain: Captain.None });
-    });
-
-    it("excludes players who have left", () => {
-      store.addPlayer("Akari", Captain.None);
-      store.addPlayer("Eiri", Captain.None);
-      store.removePlayer("Eiri");
-
-      const result = store.getPlayers();
-      expect(result).toHaveLength(1);
-      expect(result).toContainEqual({ player: "Akari", captain: Captain.None });
-    });
-
-    it("reflects current captain assignments", () => {
-      store.addPlayer("Akari", Captain.None);
-      store.addPlayer("Eiri", Captain.None);
-      store.setCaptain("Akari", Captain.Red);
-      store.setCaptain("Eiri", Captain.Blue);
-
-      const result = store.getPlayers();
-      expect(result).toContainEqual({ player: "Akari", captain: Captain.Red });
-      expect(result).toContainEqual({ player: "Eiri", captain: Captain.Blue });
-    });
-
-    it("reflects captain set at join time", () => {
-      store.addPlayer("Friday", Captain.Red);
-
-      const result = store.getPlayers();
-      expect(result).toContainEqual({ player: "Friday", captain: Captain.Red });
-    });
-
-    it("includes self wth just setPlayer", () => {
-      store.setPlayer("Akari");
-
-      const result = store.getPlayers();
-      expect(result).toContainEqual({ player: "Akari", captain: Captain.None });
-    });
-
-    it("returns empty array after $reset", () => {
-      store.addPlayer("Akari", Captain.Red);
-      store.$reset();
-
-      expect(store.getPlayers()).toStrictEqual([]);
-    });
+  it("uses server-provided roles, presence, roster order, and suggestions", () => {
+    const store = usePlayersStore();
+    store.username = "Eiri";
+    const snapshot = roomSnapshot();
+    snapshot.players.reverse();
+    const me = snapshot.players.find((player) => player.username == "Eiri")!;
+    me.captainView = true;
+    me.captain = 2;
+    store.applySnapshot(snapshot);
+    expect(Object.keys(store.players)).toEqual(snapshot.players.map((player) => player.username));
+    expect(store.isCaptainView).toBe(true);
+    expect(store.isRedCaptain).toBe(false);
+    expect(store.isBlueCaptain).toBe(true);
+    expect(store.players.Eiri.online).toBe(false);
+    expect(store.captains).toEqual(snapshot.captains);
+    store.applySnapshot({ ...snapshot, captainTurn: 2 });
+    expect(store.isCaptainView).toBe(true);
+    store.$reset();
+    expect(store.isCaptainView).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 import allWords from "../assets/words.json";
-import { createRandom } from "./random";
+import { shuffle } from "./random";
 import { boardSize } from "./rules";
 import { CardState } from "./types";
 import type { Card } from "./types";
@@ -8,10 +8,9 @@ const red = Math.round((boardSize - 1) / 3);
 const blue = red - 1;
 const white = boardSize - red - blue - 1;
 
-export const buildDeck = (seed: string): Card[] => {
-  const rnd = createRandom(seed);
+export const buildDeck = (mix = shuffle): Card[] => {
   const dictionary = allWords.slice();
-  rnd.shuffle(dictionary);
+  mix(dictionary);
 
   const round: CardState[] = [CardState.BlackClosed]
     .concat(Array(red).fill(CardState.RedClosed))
@@ -23,7 +22,7 @@ export const buildDeck = (seed: string): Card[] => {
   for (let i = 0; i + boardSize <= dictionary.length; i += boardSize) {
     const words = dictionary.slice(i, i + boardSize);
     const cards = round.slice();
-    rnd.shuffle(cards);
+    mix(cards);
     for (const idx of cards.keys()) {
       deck.push({ idx, word: words[idx], state: cards[idx] });
     }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, inject, computed } from "vue";
+import { inject, computed } from "vue";
+import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 
 import { GameResult, useGameStore } from "@/stores/game";
@@ -9,9 +10,12 @@ import { brokerKey } from "@/plugins/broker";
 const broker = inject(brokerKey);
 if (!broker) throw new Error("Missing broker provider");
 
-const room = ref(sessionStorage.getItem("room"));
+defineEmits<{ logout: [] }>();
+
+const route = useRoute();
+const room = computed(() => route.params.room);
 const store = useGameStore();
-const { turn, redScore, blueScore, gameOver } = storeToRefs(store);
+const { turn, redScore, blueScore, gameOver, canMutate } = storeToRefs(store);
 
 const playersStore = usePlayersStore();
 const { players, captainsTurn } = storeToRefs(playersStore);
@@ -34,7 +38,7 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
 
 <template>
   <div class="flex items-center space-x-2 text-2xl font-sans">
-    <div class="cursor-pointer" @click="broker.globalLogout()">
+    <div aria-hidden="true">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="w-8 h-8 fill-teal-700"
@@ -46,7 +50,7 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
       </svg>
     </div>
     <div>{{ room }}</div>
-    <div class="pl-3">
+    <button type="button" class="pl-3 cursor-pointer" aria-label="New shuffle" :disabled="!canMutate" @click="broker.newShuffle()">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="w-8 h-8 fill-teal-700"
@@ -56,9 +60,9 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
           d="M272.824 24.318c-14.929.312-25.66 3.246-32.767 8.446L142.898 84.91l-54.105 73.514C77.42 175.98 85.517 210 121.111 188.197l38.9-51.351c49.476-42.711 150.485-23.032 102.587 62.591c-23.53 49.582-12.457 73.79 17.76 83.95l13.812-46.381c23.949-53.825 68.502-63.51 66.684-106.904l107.302 7.724l-.865-112.045zm-54.09 103.338c-17.41-.3-34.486 6.898-46.92 17.375l-39.044 51.33c10.713 8.506 21.413 3.96 32.125-6.363c12.626 6.394 22.365-3.522 30.365-23.297c3.317-13.489 8.21-23.037 23.474-39.045m-32.617 88.324a13.5 13.5 0 0 0-5.232 1.235L51.72 276.725c-6.784 3.13-9.763 11.202-6.633 17.992l85.27 185.08c3.131 6.783 11.204 9.779 18 6.635l129.15-59.504c6.796-3.137 9.776-11.198 6.646-18L198.871 223.86c-2.344-5.097-7.474-8.043-12.754-7.88"
         />
       </svg>
-    </div>
+    </button>
     <div>{{ turn }}</div>
-    <div class="pl-3 cursor-pointer" @click="nextCaptainTurn()">
+    <button type="button" class="pl-3 cursor-pointer" aria-label="Advance captain suggestions" :disabled="!canMutate" @click="nextCaptainTurn()">
       <svg
         viewBox="0 0 512 512"
         class="w-8 h-8 fill-teal-700"
@@ -68,7 +72,7 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
           d="M256 38.55c-30.5 0-55 24.52-55 55c0 30.45 24.5 54.95 55 54.95s55-24.5 55-54.95c0-30.48-24.5-55-55-55M191.3 164.4c-5.7 0-11.1.4-16 1.4c-19.9 4-34.1 15.6-43.1 35.4c-9.4 20.6-12.1 50.6-5.8 88l6 5.9c13.8 13.8 36.1 21.4 58.6 21.4c21.1 0 42.1-6.7 56-19V179.2c-21-9.8-39.8-14.5-55.7-14.8m129.4 0c-15.9.3-34.7 5-55.7 14.8v118.3c13.9 12.3 34.9 19 56 19c22.5 0 44.8-7.6 58.6-21.4l6-5.9c6.3-37.4 3.6-67.4-5.8-88c-9-19.8-23.2-31.4-43.1-35.4c-4.9-1-10.3-1.4-16-1.4m-209.1 14.4h-.2c-30 .7-55.2 12.1-70.2 32.1c-13.3 17.8-19.5 42.9-13.6 76c.9 5.1 2.1 10.5 3.7 16c24.5 18.5 54.3 18.6 78.9.3c-9.2-44.8-6.9-81.9 5.6-109.4q3.6-7.95 8.4-14.7c-2.9-.2-5.8-.3-8.6-.3h-3.9c-.1 0-.1-.1-.1 0m288.8 0c0-.1 0 0-.1 0h-3.9c-2.8 0-5.7.1-8.6.3q4.8 6.75 8.4 14.7c12.5 27.5 14.8 64.6 5.6 109.4c24.5 18.3 54.4 18.2 78.9-.3c1.5-5.5 2.8-10.9 3.7-16c5.9-33.1-.3-58.2-13.6-76c-15-20-40.2-31.4-70.2-32.1zM132.8 318.4c6.9 26.1 17.7 54.9 32.9 86.1h58.6l22.7-56.7v-28c-16.4 10-36.3 14.7-56 14.7c-20.7 0-41.5-5.2-58.2-16.1m246.4 0c-16.7 10.9-37.5 16.1-58.2 16.1c-19.7 0-39.6-4.7-56-14.7v28l22.7 56.7h58.6c15.2-31.2 26-60 32.9-86.1m-264.6 3.4c-23 13.9-50.1 16.1-74.5 6.4c9.6 23 24.1 48.5 44.5 76.3h61c-14-29.6-24.2-57.2-31-82.7m282.8 0c-6.8 25.5-17 53.1-31 82.7h61c20.4-27.8 34.9-53.3 44.5-76.3c-24.3 9.7-51.5 7.5-74.5-6.4M256 373.7l-22.1 55.4l22.1 44.3l22.1-44.3zM91.53 422.5l11.47 46h35.3l-23-23l23-23zm90.27 0l16.6 16.6l6.3 6.4l-23 23h51.7l-19.3-38.6l3-7.4zm113.1 0l1.5 3.7l1.5 3.7l-19.3 38.6h51.7l-23-23l23-23zm78.9 0l16.6 16.6l6.3 6.4l-23 23H409l11.5-46zM160 426.2l-19.3 19.3l19.3 19.3l19.3-19.3zm192 0l-19.3 19.3l19.3 19.3l19.3-19.3z"
         />
       </svg>
-    </div>
+    </button>
     <div>{{ captainsTurn }}</div>
     <div class="pl-3" v-if="gameOver">
       <svg
@@ -120,7 +124,7 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
       </div>
     </div>
     <div class="pl-5">
-      <router-link to="/">
+      <button type="button" class="cursor-pointer" aria-label="Log out" @click="$emit('logout')">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="w-8 h-8 fill-teal-700"
@@ -130,7 +134,7 @@ const nextCaptainTurn = () => broker.nextCaptainsTurn();
             d="M217 28.098v455.804l142-42.597V70.697zm159.938 26.88l.062 2.327V87h16V55zM119 55v117.27h18V73h62V55zm258 50v16h16v-16zm0 34v236h16V139zm-240 58.727V233H41v46h96v35.273L195.273 256zM244 232c6.627 0 12 10.745 12 24s-5.373 24-12 24s-12-10.745-12-24s5.373-24 12-24M137 339.73h-18V448h18zM377 393v14h16v-14zm0 32v23h16v-23zM32 471v18h167v-18zm290.652 0l-60 18H480v-18z"
           />
         </svg>
-      </router-link>
+      </button>
     </div>
   </div>
 </template>

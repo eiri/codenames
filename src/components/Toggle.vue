@@ -8,6 +8,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const toggle = (event: Event) => {
+  // Keep the displayed role unchanged until the server accepts the command.
+  (event.target as HTMLInputElement).checked = !!props.isCaptainView;
+  if (!props.disabled) props.toggleCaptain();
+};
 </script>
 
 <template>
@@ -26,19 +32,17 @@ const props = defineProps<Props>();
       :id="props.team"
       :checked="props.isCaptainView"
       :disabled="props.disabled"
-      @change="props.toggleCaptain()"
+      @change="toggle"
       class="sr-only peer"
     />
     <div
       :class="{
-        'peer-checked:bg-code-red-700': props.team == 'red',
-        'peer-checked:bg-code-blue-700': props.team == 'blue',
-        'bg-zinc-200': props.disabled,
-        'after:border-zinc-200': props.disabled,
-        'bg-zinc-400': !props.disabled,
-        'after:border-zinc-400': !props.disabled,
+        'bg-code-red-700': props.isCaptainView && props.team == 'red',
+        'bg-code-blue-700': props.isCaptainView && props.team == 'blue',
+        'after:translate-x-full after:rtl:-translate-x-full after:border-white': props.isCaptainView,
+        'bg-zinc-400 after:border-zinc-400': !props.isCaptainView,
       }"
-      class="relative w-14 h-7 rounded-full peer peer-checked:after:translate-x-full peer-checked:rtl:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:inset-s-1 after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all"
+      class="relative w-14 h-7 rounded-full peer after:content-[''] after:absolute after:top-0.5 after:inset-s-1 after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all"
     ></div>
   </label>
 </template>

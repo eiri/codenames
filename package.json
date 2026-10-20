@@ -7,9 +7,11 @@
   "scripts": {
     "dev": "vite --host --port 5173",
     "dev:worker": "npm run build && wrangler dev --local",
+    "credentials": "node scripts/credentials.mjs",
     "deploy": "npm run build && wrangler deploy",
     "build": "vite build",
     "test": "vitest run",
+    "check:room": "node scripts/check-room.mjs",
     "typecheck": "tsc --noEmit && tsc -p worker/tsconfig.json",
     "lint": "eslint -c eslint.config.ts src worker",
     "dev-test": "vitest --reporter=basic --disable-console-intercept",
@@ -47,7 +49,8 @@
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.5",
-    "wrangler": "^4.151.1"
+    "wrangler": "^4.151.1",
+    "ws": "^8.22.0"
   },
   "overrides": {
     "typescript-eslint": {

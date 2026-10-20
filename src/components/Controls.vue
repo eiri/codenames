@@ -1,39 +1,28 @@
 <script setup lang="ts">
-import { inject, computed } from "vue";
+import { inject } from "vue";
 import { storeToRefs } from "pinia";
 
 import Toggle from "@/components/Toggle.vue";
 import { useGameStore } from "@/stores/game";
 import { usePlayersStore } from "@/stores/players";
-
+import { Captain } from "@/game/types";
 import { brokerKey } from "@/plugins/broker";
 
 const broker = inject(brokerKey);
 if (!broker) throw new Error("Missing broker provider");
 
-const { seed, redScore, blueScore, gameOver, hasOpenCards } =
+const { redScore, blueScore, canMutate } =
   storeToRefs(useGameStore());
-const { captainsTurn } = storeToRefs(usePlayersStore());
-const {
-  isRedCaptain,
-  isRedCaptainTaken,
-  isBlueCaptain,
-  isBlueCaptainTaken,
-  nextCaptains,
-} = usePlayersStore();
+const { captains, isRedCaptain, isBlueCaptain } = storeToRefs(usePlayersStore());
 
 const toggleRedCaptain = () => {
-  broker.setCaptain(isRedCaptain() ? 0 : 1);
+  broker.setCaptain(isRedCaptain.value ? Captain.None : Captain.Red);
 };
 
 const toggleBlueCaptain = () => {
-  broker.setCaptain(isBlueCaptain() ? 0 : 2);
+  broker.setCaptain(isBlueCaptain.value ? Captain.None : Captain.Blue);
 };
 
-const captains = computed(() => nextCaptains(seed.value, captainsTurn.value));
-const gameButton = computed(() =>
-  gameOver.value || !hasOpenCards.value ? "New game" : "Restart game",
-);
 </script>
 
 <template>
@@ -42,8 +31,8 @@ const gameButton = computed(() =>
       <Toggle
         team="red"
         :captain="captains[0]"
-        :disabled="isRedCaptainTaken() && !isRedCaptain()"
-        :isCaptainView="isRedCaptain()"
+        :disabled="!canMutate"
+        :isCaptainView="isRedCaptain"
         :toggleCaptain="toggleRedCaptain"
       />
     </div>
@@ -53,9 +42,10 @@ const gameButton = computed(() =>
     <div class="flex justify-center">
       <button
         class="w-2/3 h-12 px-4 py-0 bg-teal-700 shadow-lg shadow-teal-500/50 text-white rounded-md cursor-pointer active:scale-[.97] font-sans xl:text-2xl lg:text-xl md:text-sm"
-        @click="broker.nextGame(gameOver)"
+        :disabled="!canMutate"
+        @click="broker.nextGame()"
       >
-        {{ gameButton }}
+        New game
       </button>
     </div>
     <div class="flex justify-center text-code-blue-700">
@@ -65,8 +55,8 @@ const gameButton = computed(() =>
       <Toggle
         team="blue"
         :captain="captains[1]"
-        :disabled="isBlueCaptainTaken() && !isBlueCaptain()"
-        :isCaptainView="isBlueCaptain()"
+        :disabled="!canMutate"
+        :isCaptainView="isBlueCaptain"
         :toggleCaptain="toggleBlueCaptain"
       />
     </div>
